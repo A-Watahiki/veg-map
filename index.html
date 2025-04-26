@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>ベジタリアン対応レストラン検索</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="
+          default-src 'self' https://maps.googleapis.com;
+          script-src  'self' https://maps.googleapis.com 'unsafe-inline';
+          style-src   'self' 'unsafe-inline';
+          img-src     'self' data:;
+          font-src    'self' data:;
+          connect-src https://maps.googleapis.com;
+        ">
   <style>
     body { font-family: sans-serif; margin:0; padding:1rem; }
     #map { width: 100%; height: 400px; margin-bottom:1rem; }
