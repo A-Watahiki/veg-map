@@ -215,43 +215,52 @@ function drawResults(places, status) {
 
     // 4. Distance Matrix で徒歩時間取得
     const destinations = details.map(d => d.geometry.location);
+    const CHUNK_SIZE   = 20;  // ← 1チャンクあたりの件数。25 以下かつ origins×destinations≤100 を意識
 
-    const MAX_ELEMENTS = 25;
-    let destinationsToQuery = destinations;
-    if (destinations.length > MAX_ELEMENTS) {
-      console.warn(`destinations が ${destinations.length} 件あるので、先頭 ${MAX_ELEMENTS} 件に絞ります`);
-      destinationsToQuery = destinations.slice(0, MAX_ELEMENTS);
+    // チャンクに分割するヘルパー
+    function chunkArray(arr, size) {
+      const chunks = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i+size));
+      }
+      return chunks;
     }
-    
-    distanceService.getDistanceMatrix({
-      origins:      [originLocation],
-      destinations: destinations,
-      travelMode:   google.maps.TravelMode.WALKING,
-      unitSystem:   google.maps.UnitSystem.METRIC,
-    }, (dmRes, dmStatus) => {
-      console.log('▶︎ getDistanceMatrix callback', dmStatus, dmRes?.rows?.[0]?.elements?.length);
-      if (dmStatus === google.maps.DistanceMatrixStatus.MAX_DIMENSIONS_EXCEEDED) {
-      console.error('要素数が多すぎます:', destinationsToQuery.length);
-      // フォールバック：距離ナシで描画するか、あるいは分割リクエストに挑戦してみてください
-      renderWithoutDistance(details);
-      return;
-      }
-      if (dmStatus !== google.maps.DistanceMatrixStatus.OK) {
-        console.warn('距離取得失敗:', dmStatus);
-        renderWithoutDistance(details);
-        return;
-      }
-      const elements = dmRes.rows[0]?.elements || [];
-      // 5. 徒歩時間と距離をマッピング + ソート用に durationValue を添付
-      const enriched = details.map((d, i) => {
-      const el = elements[i] || {};
-        return {
-          detail:        d,
-          distanceText:  el.distance?.text  || '―',
-          durationText:  el.duration?.text  || '―',
-          durationValue: el.duration?.value || Infinity
-        };
-      }).sort((a, b) => a.durationValue - b.durationValue);
+
+
+    (async () => {
+  // 1) まずチャンク化
+  const destChunks = chunkArray(destinations, CHUNK_SIZE);
+  // 2) 各チャンクごとに Distance Matrix を await で回す
+  const matrixResults = [];
+  for (const chunk of destChunks) {
+    // eslint-disable-next-line no-await-in-loop
+    const dmRes = await new Promise(resolve => {
+      distanceService.getDistanceMatrix({
+        origins:      [ originLocation ],
+        destinations: chunk,
+        travelMode:   google.maps.TravelMode.WALKING,
+        unitSystem:   google.maps.UnitSystem.METRIC
+      }, (res, status) => resolve({ res, status }));
+    });
+    if (dmRes.status !== google.maps.DistanceMatrixStatus.OK) {
+      console.warn('DistanceMatrix failed for chunk:', dmRes.status);
+      // 必要なら break してフォールバック描画へ
+      break;
+    }
+    matrixResults.push(...dmRes.res.rows[0].elements);
+  }
+
+  // 3) matrixResults は元の順序で element オブジェクトが並ぶので、
+  //    details[i] と結びつけて enriched 配列を作る
+  const enriched = details.map((d, i) => {
+    const el = matrixResults[i] || {};
+    return {
+      detail:        d,
+      distanceText:  el.distance?.text  || '―',
+      durationText:  el.duration?.text  || '―',
+      durationValue: el.duration?.value || Infinity
+    };
+  }).sort((a, b) => a.durationValue - b.durationValue);
 
       // 6. マーカー＆リスト描画（徒歩時間順）
       enriched.forEach(item => {
