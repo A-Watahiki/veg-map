@@ -72,16 +72,20 @@
       });
     }));
 
-    Promise.all(allPromises).then(arrays => {
-      // flatten + place_idで重複除去
-      const merged = [];
-      const seen = new Set();
-      arrays.flat().forEach(p => {
-        if (!seen.has(p.place_id)) {
-          seen.add(p.place_id);
-          merged.push(p);
-        }
-      });
+
+   Promise.all(allPromises).then(resultsArray => {
+    console.log('multiKeyword results:', resultsArray);
+    // 手動で flatten
+    const allPlaces = resultsArray.reduce((acc, arr) => acc.concat(arr), []);
+    // place_id で重複除去
+    const merged = [];
+    const seen   = new Set();
+    allPlaces.forEach(p => {
+      if (!seen.has(p.place_id)) {
+        seen.add(p.place_id);
+        merged.push(p);
+      }
+    });
       // 結果を drawResults に渡す（ステータスOK扱い）
       drawResults(merged, google.maps.places.PlacesServiceStatus.OK);
     });
@@ -95,6 +99,7 @@
 
 
 function drawResults(places, status) {
+  console.log('drawResults called with', places, status);
   const resultsEl = document.getElementById('results');
   resultsEl.innerHTML = '';
 
