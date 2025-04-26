@@ -10,7 +10,7 @@
           script-src   'self' https://maps.googleapis.com 'unsafe-inline';
           style-src    'self' 'unsafe-inline' https://fonts.googleapis.com;
           font-src     'self' data: https://fonts.gstatic.com;
-          img-src      'self' data: https://maps.googleapis.com;
+          img-src      'self' data: https://maps.googleapis.com https://maps.gstatic.com;
           connect-src  'self' https://maps.googleapis.com;
         ">
   <style>
@@ -58,31 +58,37 @@
       service.nearbySearch({
         location,
         radius: 1500,
-        type: ['vegetarian_restaurant']
-      }, (places, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
-          alert("無料枠を超過しました。検索を停止します。");
-          document.getElementById("search-btn").disabled = true;
-          return;
-        }
-        if (status !== google.maps.places.PlacesServiceStatus.OK) {
-          alert("検索に失敗しました: " + status);
-          return;
-        }        
-        // 結果描画
-        const resultsEl = document.getElementById("results");
-        resultsEl.innerHTML = "";
-        places.forEach(p => {
-          new google.maps.Marker({
-            map,
-            position: p.geometry.location
-          });
-          const li = document.createElement("li");
-          li.textContent = `${p.name} — ${p.formatted_address}`;
-          resultsEl.appendChild(li);
-        });
-      });
+        type: ['restaurant'],
+        keyword: 'vegetarian'
+      }, drawResults);
+}
+
+function drawResults(places, status) {
+  if (status !== google.maps.places.PlacesServiceStatus.OK) {
+    console.warn('検索失敗:', status);
+    return;
+  }
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '';
+
+  places.forEach(p => {
+    // ★1: レストラン以外は除外
+    if (!p.types || p.types.indexOf('restaurant') === -1) {
+      return;
     }
+
+    // マーカー
+    new google.maps.Marker({
+      map,
+      position: p.geometry.location
+    });
+
+    // テキストリスト
+    const li = document.createElement('li');
+    li.textContent = `${p.name} — ${p.vicinity}`;
+    resultsEl.appendChild(li);
+  });
+}
   </script>
 
   <script async defer
