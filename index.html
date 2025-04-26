@@ -58,7 +58,8 @@
   const request = {
     location,
     radius: 1500,
-    type: 'vegetarian_restaurant'
+    type: 'restaurant',
+    keyword: 'vegetarian'
   };
   console.log('NearbySearch request=', request);
   service.nearbySearch(request, drawResults);
@@ -66,43 +67,59 @@
 
 
 function drawResults(places, status) {
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '';
+
   if (status !== google.maps.places.PlacesServiceStatus.OK) {
     console.warn('検索失敗:', status);
     return;
   }
-  const resultsEl = document.getElementById('results');
-  resultsEl.innerHTML = '';
 
   places.forEach(p => {
     // ★ レストラン以外は除外
-    if (!p.types || p.types.indexOf('restaurant') === -1) return;
+    if (!p.types || !p.types.includes('restaurant')) return;
 
-    // マーカー
-    new google.maps.Marker({
-      map,
-      position: p.geometry.location
+    // ★ 詳細取得して servesVegetarianFood をチェック
+    service.getDetails({
+      placeId: p.place_id,
+      fields: [
+        'name',
+        'vicinity',
+        'geometry',
+        'place_id',
+        'servesVegetarianFood'
+      ]
+    }, (detail, ds) => {
+      if (ds === google.maps.places.PlacesServiceStatus.OK
+          && detail.servesVegetarianFood) {
+        // マーカー設置
+        new google.maps.Marker({
+          map,
+          position: detail.geometry.location
+        });
+
+        // place_id から Google マップ URL を生成
+        const mapsUrl =
+          `https://www.google.com/maps/place/?q=place_id:${detail.place_id}`;
+
+        // リスト要素を作成
+        const li = document.createElement('li');
+        const a  = document.createElement('a');
+        a.href       = mapsUrl;
+        a.textContent= detail.name;
+        a.target     = '_blank';
+        a.rel        = 'noopener';
+        li.appendChild(a);
+        li.appendChild(
+          document.createTextNode(` — ${detail.vicinity}`)
+        );
+
+        resultsEl.appendChild(li);
+      }
     });
-
-    // Google マップ place_id リンクを生成
-    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${p.place_id}`;
-
-    // リスト要素を作成
-    const li = document.createElement('li');
-    // <a>タグで店舗名をリンク化
-    const a = document.createElement('a');
-    a.href = mapsUrl;
-    a.textContent = p.name;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    li.appendChild(a);
-
-    // 住所部分をテキストで追加
-    const text = document.createTextNode(` — ${p.vicinity}`);
-    li.appendChild(text);
-
-    resultsEl.appendChild(li);
   });
 }
+
   </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap"> </script>
