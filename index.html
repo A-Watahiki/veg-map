@@ -60,21 +60,38 @@
     }
 
     function multiKeywordSearch(location, keywords) {
+
+    let overLimit = false;
     const allPromises = keywords.map(kw => new Promise(resolve => {
-      service.nearbySearch({
-        location,
-        radius: 1500,
-        type: 'restaurant',
-        keyword: kw
-      }, (results, status) => {
-        resolve(status === google.maps.places.PlacesServiceStatus.OK
-          ? results : []);
-      });
-    }));
+    service.nearbySearch({
+      location,
+      radius: 1500,
+      type: 'restaurant',
+      keyword: kw
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
+        overLimit = true;
+        resolve([]);  // 空配列返して処理だけ続ける
+      }
+      else if (status === google.maps.places.PlacesServiceStatus.OK) {
+        resolve(results);
+      }
+      else {
+        resolve([]);
+      }
+    });
+  }));
 
 
    Promise.all(allPromises).then(resultsArray => {
     console.log('multiKeyword results:', resultsArray);
+    if (overLimit) {
+      // ボタンを無効化して以降の検索をストップ
+      const btn = document.getElementById('search-btn');
+      btn.disabled = true;
+      alert('無料クォータを超過しました。新しい検索はできません。');
+      return;
+    }
     // 手動で flatten
     const allPlaces = resultsArray.reduce((acc, arr) => acc.concat(arr), []);
     // place_id で重複除去
