@@ -41,7 +41,8 @@
   <ul id="results"></ul>
 
   <script>
-      let map, service, autocomplete, distanceService, originLocation;
+      let map, service, autocomplete, distanceService, originLocation, originMarker;
+
       function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 35.681236, lng: 139.767125 },
@@ -308,7 +309,7 @@ function drawResults(places, status) {
         let metaText = `${d.vicinity}`;
         if (!hasFlag) metaText += ' ！ベジタリアンメニューがあるか要確認';
         // 徒歩距離・時間
-        metaText += `（徒歩 ${item.distanceText}、約${item.durationText}）`;
+        metaText += `（目的地からの距離 ${item.distanceText}、約${item.durationText}）`;
 
         const meta = document.createElement('div');
         meta.classList.add('meta');
