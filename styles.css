@@ -39,3 +39,47 @@
   /* 影を強めて浮いて見えるように */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
 }
+
+/* 1) 検索バー全体をセンタリング */
+#controls {
+  display: flex;                      /* Flexbox レイアウト */  
+  justify-content: center;            /* 中央寄せ */  
+  margin: 1rem 0;                     /* 上下に余白 */   
+}
+
+/* 2) 入力フィールドを大きく */
+#location-input {
+  width: 80%;                         /* 幅を80%に設定 */  
+  max-width: 600px;                   /* 最大幅600px */   
+  font-size: 1.2rem;                  /* フォントを少し大きく */   
+  padding: 0.8rem 1rem;               /* 内側余白を拡大 */   
+  border: 2px solid #23408C;          /* Animotethics のダークブルー系 */  
+  border-radius: 8px 0 0 8px;         /* 左側のみ丸く */   
+  background-color: #f3f3f9;          /* 淡いグレー背景 */  
+  color: #333;                        /* テキスト色 */ }  
+}
+
+/* 3) 検索ボタンを大きく＆統一感ある色に */
+#search-btn {
+  font-size: 1.2rem;                  /* フォントサイズ */   
+  padding: 0.8rem 1.2rem;             /* 内側余白 */  
+  border: 2px solid #23408C;          /* ボーダー色合わせ */  
+  border-left: none;                  /* 左側の二重ボーダーを消す */  
+  border-radius: 0 8px 8px 0;         /* 右側のみ丸く */   
+  background-color: #23408C;          /* ボタン背景色 */  
+  color: #fff;                        /* テキストを白に */   
+  cursor: pointer;                    /* ホバー時に指アイコン */  
+}
+
+/* 4) ホバーで浮かび上がる影を追加 */
+#search-btn:hover,
+#location-input:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* ほんのり大きめの影 */   
+}
+
+/* 5) フォーカス時のアクセント色 */
+#location-input:focus {
+  outline: none;                     
+  border-color: #77B8D1;              /* Animotethics のライトブルー系 */  
+  box-shadow: 0 0 0 3px rgba(119,184,209,0.3);  
+}
