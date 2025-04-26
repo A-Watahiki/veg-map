@@ -32,7 +32,7 @@
 
   <script>
       let map, service, autocomplete, distanceService, originLocation;
-      window.initMap = function() {
+      function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 35.681236, lng: 139.767125 },
         zoom: 14
