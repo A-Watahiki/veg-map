@@ -214,6 +214,8 @@ function drawResults(places, status) {
     }
 
     // 4. Distance Matrix で徒歩時間取得
+    const destinations = details.map(d => d.geometry.location);
+
     const MAX_ELEMENTS = 25;
     let destinationsToQuery = destinations;
     if (destinations.length > MAX_ELEMENTS) {
@@ -221,7 +223,6 @@ function drawResults(places, status) {
       destinationsToQuery = destinations.slice(0, MAX_ELEMENTS);
     }
     
-    const destinations = details.map(d => d.geometry.location);
     distanceService.getDistanceMatrix({
       origins:      [originLocation],
       destinations: destinations,
@@ -243,7 +244,7 @@ function drawResults(places, status) {
       const elements = dmRes.rows[0]?.elements || [];
       // 5. 徒歩時間と距離をマッピング + ソート用に durationValue を添付
       const enriched = details.map((d, i) => {
-        const el = elements[i] || {};
+      const el = elements[i] || {};
         return {
           detail:        d,
           distanceText:  el.distance?.text  || '―',
