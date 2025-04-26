@@ -171,23 +171,6 @@ function drawResults(places, status) {
   });
 
     
-  // 2) マーカー＆簡易リスト描画（forEach のブロック）
-  filtered.forEach(p => {
-    new google.maps.Marker({
-      map,
-      position: p.geometry.location
-    });
-    const li = document.createElement('li');
-    const a  = document.createElement('a');
-    a.href        = `https://www.google.com/maps/place/?q=place_id:${p.place_id}`;
-    a.textContent = p.name;
-    a.target      = '_blank';
-    a.rel         = 'noopener';
-    li.appendChild(a);
-    li.appendChild(document.createTextNode(` — ${p.vicinity}`));
-    resultsEl.appendChild(li);
-  }); 
-
   // 2. getDetails を Promise 化して並列取得
   const detailPromises = filtered.map(p => new Promise(resolve => {
     service.getDetails({
