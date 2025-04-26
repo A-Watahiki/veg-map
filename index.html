@@ -151,29 +151,42 @@
 
 function drawResults(places, status) {
   console.log('drawResults called with', places, status);
-
-
-  const resultsEl = document.getElementById('results');
-  resultsEl.innerHTML = '';
-
   if (status !== google.maps.places.PlacesServiceStatus.OK) {
     console.warn('検索失敗:', status);
     return;
   }
 
-  places.forEach(p => {
-    // レストラン以外は除外
-    if (!p.types || !p.types.includes('restaurant')) return;
-    // ★ 手動で距離フィルタ（Strict 1.5km）
-    const dist = google.maps.geometry.spherical.computeDistanceBetween(
-      originLocation, p.geometry.location);
-    if (dist > 1500) return;
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '';
 
-    // マーカー
+
+  // 1) 直線距離フィルタ＋レストランフィルタ
+  const filtered = places.filter(p => {
+    if (!p.types?.includes('restaurant')) return false;
+    const dist = google.maps.geometry.spherical.computeDistanceBetween(
+      originLocation,
+      p.geometry.location
+    );
+    return dist <= 1500;
+  });
+
+    
+  // 2) マーカー＆簡易リスト描画（forEach のブロック）
+  filtered.forEach(p => {
     new google.maps.Marker({
       map,
       position: p.geometry.location
     });
+    const li = document.createElement('li');
+    const a  = document.createElement('a');
+    a.href        = `https://www.google.com/maps/place/?q=place_id:${p.place_id}`;
+    a.textContent = p.name;
+    a.target      = '_blank';
+    a.rel         = 'noopener';
+    li.appendChild(a);
+    li.appendChild(document.createTextNode(` — ${p.vicinity}`));
+    resultsEl.appendChild(li);
+  }); 
 
   // 2. getDetails を Promise 化して並列取得
   const detailPromises = restaurants.map(p => new Promise(resolve => {
@@ -323,7 +336,7 @@ function drawResults(places, status) {
       sendHeightToParent();
     })();
   });
-});
+}
 
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
