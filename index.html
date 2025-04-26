@@ -214,6 +214,13 @@ function drawResults(places, status) {
     }
 
     // 4. Distance Matrix で徒歩時間取得
+    const MAX_ELEMENTS = 25;
+    let destinationsToQuery = destinations;
+    if (destinations.length > MAX_ELEMENTS) {
+      console.warn(`destinations が ${destinations.length} 件あるので、先頭 ${MAX_ELEMENTS} 件に絞ります`);
+      destinationsToQuery = destinations.slice(0, MAX_ELEMENTS);
+    }
+    
     const destinations = details.map(d => d.geometry.location);
     distanceService.getDistanceMatrix({
       origins:      [originLocation],
@@ -222,8 +229,18 @@ function drawResults(places, status) {
       unitSystem:   google.maps.UnitSystem.METRIC,
     }, (dmRes, dmStatus) => {
       console.log('▶︎ getDistanceMatrix callback', dmStatus, dmRes?.rows?.[0]?.elements?.length);
+      if (dmStatus === google.maps.DistanceMatrixStatus.MAX_DIMENSIONS_EXCEEDED) {
+      console.error('要素数が多すぎます:', destinationsToQuery.length);
+      // フォールバック：距離ナシで描画するか、あるいは分割リクエストに挑戦してみてください
+      renderWithoutDistance(details);
+      return;
+      }
+      if (dmStatus !== google.maps.DistanceMatrixStatus.OK) {
+        console.warn('距離取得失敗:', dmStatus);
+        renderWithoutDistance(details);
+        return;
+      }
       const elements = dmRes.rows[0]?.elements || [];
-
       // 5. 徒歩時間と距離をマッピング + ソート用に durationValue を添付
       const enriched = details.map((d, i) => {
         const el = elements[i] || {};
