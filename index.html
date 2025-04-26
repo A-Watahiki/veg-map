@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ベジタリアン対応レストラン検索</title>
+  <style>
+    body { font-family: sans-serif; margin:0; padding:1rem; }
+    #map { width: 100%; height: 400px; margin-bottom:1rem; }
+    #results { list-style:none; padding:0; }
+    #results li { margin:4px 0; }
+    #controls { margin-bottom:1rem; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <input id="location-input" type="text" placeholder="場所を入力" />
+    <button id="search-btn">検索</button>
+  </div>
+  <div id="map"></div>
+  <ul id="results"></ul>
+
+  <script>
+    let map, service, autocomplete;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 35.681236, lng: 139.767125 },
+        zoom: 14
+      });
+      service = new google.maps.places.PlacesService(map);
+      autocomplete = new google.maps.places.Autocomplete(
+        document.getElementById("location-input")
+      );
+      autocomplete.bindTo("bounds", map);
+
+      document.getElementById("search-btn").addEventListener("click", () => {
+        const place = autocomplete.getPlace();
+        if (!place || !place.geometry) {
+          alert("候補から場所を選択してください");
+          return;
+        }
+        map.setCenter(place.geometry.location);
+        map.setZoom(15);
+        searchNearby(place.geometry.location);
+      });
+    }
+
+    function searchNearby(location) {
+      service.nearbySearch({
+        location,
+        radius: 1500,
+        type: ['restaurant']
+      }, (places, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
+          alert("無料枠を超過しました。検索を停止します。");
+          document.getElementById("search-btn").disabled = true;
+          return;
+        }
+        if (status !== google.maps.places.PlacesServiceStatus.OK) {
+          alert("検索に失敗しました: " + status);
+          return;
+        }
+        document.getElementById("results").innerHTML = "";
+        places.forEach(p => {
+          service.getDetails({
+            placeId: p.place_id,
+            fields: ['name','formatted_address','geometry','servesVegetarianFood']
+          }, (detail, st2) => {
+            if (st2 === google.maps.places.PlacesServiceStatus.OK
+                && detail.servesVegetarianFood) {
+              new google.maps.Marker({
+                map, position: detail.geometry.location
+              });
+              const li = document.createElement("li");
+              li.textContent = `${detail.name} — ${detail.formatted_address}`;
+              document.getElementById("results").appendChild(li);
+            }
+          });
+        });
+      });
+    }
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA
+          &libraries=places&callback=initMap">
+  </script>
+</body>
+</html>
