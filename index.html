@@ -70,7 +70,14 @@
     service.nearbySearch(request, drawResults);
   }
 
-  function drawResults(places, status) {
+  function sendHeightToParent() {
+  const h = document.documentElement.scrollHeight;
+  // '*' ではなくあなたの Studio 側ドメインを指定しておくのが望ましいです
+  window.parent.postMessage({ type: 'resize', height: h }, '*');
+}
+
+
+function drawResults(places, status) {
   const resultsEl = document.getElementById('results');
   resultsEl.innerHTML = '';
 
@@ -103,7 +110,6 @@
       ) {
         resolve(detail);
       } else {
-        // 取得エラーの場合は null を返す
         resolve(null);
       }
     });
@@ -115,6 +121,7 @@
 
     if (!details.length) {
       resultsEl.textContent = '該当する店舗が見つかりませんでした。';
+      sendHeightToParent();
       return;
     }
 
@@ -126,12 +133,9 @@
       travelMode:   google.maps.TravelMode.WALKING,
       unitSystem:   google.maps.UnitSystem.METRIC,
     }, (dmRes, dmStatus) => {
-      if (dmStatus !== 'OK' || !dmRes.rows.length) {
-        console.warn('距離取得失敗:', dmStatus);
-      }
-
-      // 距離情報をマッピング
       const elements = dmRes.rows[0]?.elements || [];
+
+      // 5. 徒歩時間と距離をマッピング + ソート用に durationValue を添付
       const enriched = details.map((d, i) => {
         const el = elements[i] || {};
         return {
@@ -140,14 +144,12 @@
           durationText:  el.duration?.text  || '―',
           durationValue: el.duration?.value || Infinity
         };
-      });
+      }).sort((a, b) => a.durationValue - b.durationValue);
 
-      // 5. 徒歩時間順にソート
-      enriched.sort((a, b) => a.durationValue - b.durationValue);
-
-      // 6. マーカー＆リスト描画
+      // 6. マーカー＆リスト描画（徒歩時間順）
       enriched.forEach(item => {
         const d = item.detail;
+        const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
 
         // マーカー
         new google.maps.Marker({
@@ -155,32 +157,46 @@
           position: d.geometry.location
         });
 
-        // リスト要素
+        // リスト要素を作成
         const li = document.createElement('li');
-        // ★カード風デザイン用クラスを追加
         li.classList.add('result-item');
+        li.style.cursor = 'pointer';
+        // カード全体クリックでリンクを開く
+        li.addEventListener('click', () => {
+          window.open(mapsUrl, '_blank');
+        });
 
-        const a  = document.createElement('a');
-        a.href        = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+        // 店名
+        const a = document.createElement('a');
         a.textContent = d.name;
+        a.href        = mapsUrl;
         a.target      = '_blank';
         a.rel         = 'noopener';
+        a.style.textDecoration = 'none';
+        a.style.color = 'inherit';
         li.appendChild(a);
 
-        // 「要確認」フラグ
+        // 要確認フラグ
         const hasFlag = d.hasOwnProperty('servesVegetarianFood');
-        let suffix = ` — ${d.vicinity}`;
-        if (!hasFlag) suffix += ' ！ベジタリアンメニューがあるか要確認';
+        let metaText = `${d.vicinity}`;
+        if (!hasFlag) metaText += ' ！ベジタリアンメニューがあるか要確認';
+        // 徒歩距離・時間
+        metaText += `（徒歩 ${item.distanceText}、約${item.durationText}）`;
 
-        // 徒歩距離・時間を追加
-        suffix += `（徒歩 ${item.distanceText}、約${item.durationText}）`;
-        li.appendChild(document.createTextNode(suffix));
+        const meta = document.createElement('div');
+        meta.classList.add('meta');
+        meta.textContent = metaText;
+        li.appendChild(meta);
 
         resultsEl.appendChild(li);
       });
+
+      // 7. 親ページへ高さを通知
+      sendHeightToParent();
     });
   });
 }
+
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap"> </script>
