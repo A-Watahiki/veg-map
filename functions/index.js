@@ -6,6 +6,8 @@ import fetch from 'node-fetch';
 functions.http('getVegetarianFlag', async (req, res) => {
   // 1) CORS 対応
   res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') {
     res.set('Access-Control-Allow-Methods', 'GET');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
