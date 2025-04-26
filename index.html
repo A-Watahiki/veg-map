@@ -292,9 +292,12 @@ function drawResults(places, status) {
       map: map
     });
 
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=place_id:${d.place_id}`;
-
-
+    const mapsUrl = `https://www.google.com/maps/search/?` + 
+    new URLSearchParams({
+       api:             '1',
+       query:           d.name,          // e.g. "Morricone caffè italiano"
+       query_place_id:  d.place_id
+     }).toString();
 
     // 1) <li> は既に flex container
     const li = document.createElement('li');
