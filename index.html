@@ -74,10 +74,8 @@ function drawResults(places, status) {
   resultsEl.innerHTML = '';
 
   places.forEach(p => {
-    // ★1: レストラン以外は除外
-    if (!p.types || p.types.indexOf('restaurant') === -1) {
-      return;
-    }
+    // ★ レストラン以外は除外
+    if (!p.types || p.types.indexOf('restaurant') === -1) return;
 
     // マーカー
     new google.maps.Marker({
@@ -85,9 +83,23 @@ function drawResults(places, status) {
       position: p.geometry.location
     });
 
-    // テキストリスト
+    // Google マップ place_id リンクを生成
+    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${p.place_id}`;
+
+    // リスト要素を作成
     const li = document.createElement('li');
-    li.textContent = `${p.name} — ${p.vicinity}`;
+    // <a>タグで店舗名をリンク化
+    const a = document.createElement('a');
+    a.href = mapsUrl;
+    a.textContent = p.name;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    li.appendChild(a);
+
+    // 住所部分をテキストで追加
+    const text = document.createTextNode(` — ${p.vicinity}`);
+    li.appendChild(text);
+
     resultsEl.appendChild(li);
   });
 }
