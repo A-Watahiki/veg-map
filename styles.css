@@ -16,6 +16,20 @@
   cursor: pointer;
 }
 
+
+/* 2. カラムをそれぞれ全体幅の1/3に固定 */
+.result-item > div {
+  flex: 0 0 33.3333%;     /* 幅を33.3333%に固定 */
+  padding: 0 10pt;        /* 左右10ptの余白 */
+  box-sizing: border-box; /* パディング込みで幅を計算 */
+
+  /* 折り返し設定 */
+  white-space: normal;           /* 通常の折り返しを有効に */
+  overflow-wrap: break-word;     /* 単語単位で折り返し */
+  word-break: break-all;         /* 長い単語も折り返す */
+}
+
+
 /* 店名リンクは左側に伸ばす */
 .result-item a {
   flex: 1;
