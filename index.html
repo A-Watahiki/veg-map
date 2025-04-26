@@ -151,6 +151,11 @@
 
 function drawResults(places, status) {
   console.log('drawResults called with', places, status);
+  // ■ フィルタ前の検索結果を全件ログに出力
+  console.table(places.map(p => ({
+    name:     p.name,
+    types:    p.types
+  })));
   if (status !== google.maps.places.PlacesServiceStatus.OK) {
     console.warn('検索失敗:', status);
     return;
