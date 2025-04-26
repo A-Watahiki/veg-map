@@ -201,7 +201,10 @@ function drawResults(places, status) {
   }));
 
   Promise.all(detailPromises).then(detailsRaw => {
+    console.log('▶︎ detailPromises resolved, items:', detailsRaw.length);
+
     // 3. null を除去
+
     const details = detailsRaw.filter(d => d !== null);
 
     if (!details.length) {
@@ -218,6 +221,7 @@ function drawResults(places, status) {
       travelMode:   google.maps.TravelMode.WALKING,
       unitSystem:   google.maps.UnitSystem.METRIC,
     }, (dmRes, dmStatus) => {
+      console.log('▶︎ getDistanceMatrix callback', dmStatus, dmRes?.rows?.[0]?.elements?.length);
       const elements = dmRes.rows[0]?.elements || [];
 
       // 5. 徒歩時間と距離をマッピング + ソート用に durationValue を添付
@@ -233,6 +237,7 @@ function drawResults(places, status) {
 
       // 6. マーカー＆リスト描画（徒歩時間順）
       enriched.forEach(item => {
+        console.log('Appending list item for', item.detail.name);
         const d = item.detail;
         const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
 
@@ -274,6 +279,8 @@ function drawResults(places, status) {
         li.appendChild(meta);
 
         resultsEl.appendChild(li);
+        console.log('▶︎ finished appending', resultsEl.children.length, 'items');
+
       });
 
       // 7. 親ページへ高さを通知
