@@ -90,6 +90,8 @@ function drawResults(places, status) {
         'serves_vegetarian_food'
       ]
     }, (detail, ds) => {
+      // ① ここで detail オブジェクトを丸ごと出力
+      console.log('getDetails response:', detail, 'status:', ds);
       if (ds === google.maps.places.PlacesServiceStatus.OK
           && detail.servesVegetarianFood) {
         // マーカー設置
