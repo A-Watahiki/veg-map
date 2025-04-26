@@ -292,11 +292,8 @@ function drawResults(places, status) {
       map: map
     });
 
-    const mapsUrl = 'https://www.google.com/maps/search/?' +
-    new URLSearchParams({
-      api:            '1',
-      query_place_id: d.place_id
-    }).toString();
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=place_id:${d.place_id}`;
+
 
 
     // 1) <li> は既に flex container
