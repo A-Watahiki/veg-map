@@ -286,6 +286,13 @@ function drawResults(places, status) {
     const d = item.detail;
     const needsConfirm = !d.hasOwnProperty('servesVegetarianFood') || d.servesVegetarianFood === false;
 
+    // 店名・住所・距離を描画する前に
+    new google.maps.Marker({
+      position: d.geometry.location,
+      map: map
+    });
+
+
     // 1) <li> は既に flex container
     const li = document.createElement('li');
     li.classList.add('result-item');
