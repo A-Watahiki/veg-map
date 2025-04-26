@@ -69,77 +69,114 @@
     service.nearbySearch(request, drawResults);
   }
 
-    function drawResults(places, status) {
-    const resultsEl = document.getElementById('results');
-    resultsEl.innerHTML = '';
+  function drawResults(places, status) {
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '';
 
-    if (status !== google.maps.places.PlacesServiceStatus.OK) {
-      console.warn('検索失敗:', status);
+  if (status !== google.maps.places.PlacesServiceStatus.OK) {
+    console.warn('検索失敗:', status);
+    return;
+  }
+
+  // 1. レストランのみ抽出
+  const restaurants = places.filter(p =>
+    p.types && p.types.includes('restaurant')
+  );
+
+  // 2. getDetails を Promise 化して並列取得
+  const detailPromises = restaurants.map(p => new Promise(resolve => {
+    service.getDetails({
+      placeId: p.place_id,
+      fields: [
+        'name',
+        'vicinity',
+        'geometry',
+        'place_id',
+        'serves_vegetarian_food'
+      ]
+    }, (detail, ds) => {
+      if (
+        ds === google.maps.places.PlacesServiceStatus.OK &&
+        detail.geometry &&
+        detail.geometry.location
+      ) {
+        resolve(detail);
+      } else {
+        // 取得エラーの場合は null を返す
+        resolve(null);
+      }
+    });
+  }));
+
+  Promise.all(detailPromises).then(detailsRaw => {
+    // 3. null を除去
+    const details = detailsRaw.filter(d => d !== null);
+
+    if (!details.length) {
+      resultsEl.textContent = '該当する店舗が見つかりませんでした。';
       return;
     }
 
-    places.forEach(p => {
-      if (!p.types || !p.types.includes('restaurant')) return;
+    // 4. Distance Matrix で徒歩時間取得
+    const destinations = details.map(d => d.geometry.location);
+    distanceService.getDistanceMatrix({
+      origins:      [originLocation],
+      destinations: destinations,
+      travelMode:   google.maps.TravelMode.WALKING,
+      unitSystem:   google.maps.UnitSystem.METRIC,
+    }, (dmRes, dmStatus) => {
+      if (dmStatus !== 'OK' || !dmRes.rows.length) {
+        console.warn('距離取得失敗:', dmStatus);
+      }
 
-      service.getDetails({
-        placeId: p.place_id,
-        fields: [
-          'name',
-          'vicinity',
-          'geometry',
-          'place_id',
-          'serves_vegetarian_food'
-        ]
-      }, (detail, ds) => {
-        if (ds !== google.maps.places.PlacesServiceStatus.OK) return;
+      // 距離情報をマッピング
+      const elements = dmRes.rows[0]?.elements || [];
+      const enriched = details.map((d, i) => {
+        const el = elements[i] || {};
+        return {
+          detail:        d,
+          distanceText:  el.distance?.text  || '―',
+          durationText:  el.duration?.text  || '―',
+          durationValue: el.duration?.value || Infinity
+        };
+      });
 
-        // マーカーを設置
+      // 5. 徒歩時間順にソート
+      enriched.sort((a, b) => a.durationValue - b.durationValue);
+
+      // 6. マーカー＆リスト描画
+      enriched.forEach(item => {
+        const d = item.detail;
+
+        // マーカー
         new google.maps.Marker({
           map,
-          position: detail.geometry.location
+          position: d.geometry.location
         });
 
-        // リスト要素のベースを生成
+        // リスト要素
         const li = document.createElement('li');
-        const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${detail.place_id}`;
-        const a = document.createElement('a');
-        a.href        = mapsUrl;
-        a.textContent = detail.name;
+        const a  = document.createElement('a');
+        a.href        = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+        a.textContent = d.name;
         a.target      = '_blank';
         a.rel         = 'noopener';
         li.appendChild(a);
 
-        // 住所と要確認フラグ
-        const hasFlag = detail.hasOwnProperty('servesVegetarianFood');
-        const suffix = hasFlag
-          ? ` — ${detail.vicinity}`
-          : ` — ${detail.vicinity} （要確認）`;
+        // 「要確認」フラグ
+        const hasFlag = d.hasOwnProperty('servesVegetarianFood');
+        let suffix = ` — ${d.vicinity}`;
+        if (!hasFlag) suffix += ' ！ベジタリアンメニューがあるか要確認';
+
+        // 徒歩距離・時間を追加
+        suffix += `（徒歩 ${item.distanceText}、約${item.durationText}）`;
         li.appendChild(document.createTextNode(suffix));
 
-        // 歩行距離を取得
-        distanceService.getDistanceMatrix({
-          origins:      [originLocation],
-          destinations: [detail.geometry.location],
-          travelMode:   google.maps.TravelMode.WALKING,
-          unitSystem:   google.maps.UnitSystem.METRIC,
-        }, (dmRes, dmStatus) => {
-          if (
-            dmStatus === google.maps.places.PlacesServiceStatus.OK ||
-            dmStatus === 'OK'
-          ) {
-            const elem = dmRes.rows[0].elements[0];
-            if (elem.status === 'OK') {
-              // 例: 距離 1.2km (約 15 分)
-              const text = `（距離 ${elem.distance.text}、約${elem.duration.text}）`;
-              li.appendChild(document.createTextNode(text));
-            }
-          }
-          // 結果リストに追加（距離取得後でもOK）
-          resultsEl.appendChild(li);
-        });
+        resultsEl.appendChild(li);
       });
     });
-  }
+  });
+}
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap"> </script>
