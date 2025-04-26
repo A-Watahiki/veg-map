@@ -274,53 +274,56 @@ function drawResults(places, status) {
     };
   }).sort((a, b) => a.durationValue - b.durationValue);
 
-      // 6. マーカー＆リスト描画（徒歩時間順）
-      enriched.forEach(item => {
-        console.log('Appending list item for', item.detail.name);
-        const d = item.detail;
-        const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+  // 6. マーカー＆リスト描画（徒歩時間順）
+  enriched.forEach(item => {
+    console.log('Appending list item for', item.detail.name);
+    const d = item.detail;
+    const needsConfirm = !d.hasOwnProperty('servesVegetarianFood') || d.servesVegetarianFood === false;
 
-        // マーカー
-        new google.maps.Marker({
-          map,
-          position: d.geometry.location
-        });
+    // 1) <li> は既に flex container
+    const li = document.createElement('li');
+    li.classList.add('result-item');
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', () => {
+      window.open(`https://www.google.com/maps/place/?q=place_id:${d.place_id}`, '_blank');
+    });
 
-        // リスト要素を作成
-        const li = document.createElement('li');
-        li.classList.add('result-item');
-        li.style.cursor = 'pointer';
-        // カード全体クリックでリンクを開く
-        li.addEventListener('click', () => {
-          window.open(mapsUrl, '_blank');
-        });
+    // 2) 店名カラム
+    const nameDiv = document.createElement('div');
+    nameDiv.classList.add('item-name');
 
-        // 店名
-        const a = document.createElement('a');
-        a.textContent = d.name;
-        a.href        = mapsUrl;
-        a.target      = '_blank';
-        a.rel         = 'noopener';
-        a.style.textDecoration = 'none';
-        a.style.color = 'inherit';
-        li.appendChild(a);
+    // → 要確認フラグが立っていれば先頭に赤いビックリを追加
+    if (needsConfirm) {
+      const emoji = document.createElement('span');
+      emoji.textContent = '❗️ ';
+      // optional: emoji.style.color = 'red';
+      nameDiv.appendChild(emoji);
+    }
 
-        // 要確認フラグ
-        const hasFlag = d.hasOwnProperty('servesVegetarianFood');
-        let metaText = `${d.vicinity}`;
-        if (!hasFlag) metaText += ' ！ベジタリアンメニューがあるか要確認';
-        // 徒歩距離・時間
-        metaText += `（目的地からの距離 ${item.distanceText}、約${item.durationText}）`;
+    const a = document.createElement('a');
+    a.textContent = d.name;
+    a.href        = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+    a.target      = '_blank';
+    a.rel         = 'noopener';
+    a.style.textDecoration = 'none';
+    a.style.color = 'inherit';
+    nameDiv.appendChild(a);
 
-        const meta = document.createElement('div');
-        meta.classList.add('meta');
-        meta.textContent = metaText;
-        li.appendChild(meta);
+    // 3) 住所カラム
+    const vicinityDiv = document.createElement('div');
+    vicinityDiv.classList.add('item-vicinity');
+    vicinityDiv.textContent = d.vicinity;
 
-        resultsEl.appendChild(li);
-        console.log('▶︎ finished appending', resultsEl.children.length, 'items');
+    // 4) 距離＆時間カラム
+    const distDiv = document.createElement('div');
+    distDiv.classList.add('item-distance');
+    distDiv.textContent = `目的地からの距離 ${item.distanceText}、約${item.durationText}`;
 
-      });
+    // 5) li に append
+    li.append(nameDiv, vicinityDiv, distDiv);
+    resultsEl.appendChild(li);
+    console.log('▶︎ finished appending', resultsEl.children.length, 'items');
+    });
 
       // 7. 親ページへ高さを通知
       sendHeightToParent();
