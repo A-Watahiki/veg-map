@@ -161,10 +161,20 @@ function drawResults(places, status) {
     return;
   }
 
-  // 1. レストランのみ抽出
-  const restaurants = places.filter(p =>
-    p.types && p.types.includes('restaurant')
-  );
+  places.forEach(p => {
+    // レストラン以外は除外
+    if (!p.types || !p.types.includes('restaurant')) return;
+    // ★ 手動で距離フィルタ（Strict 1.5km）
+    const dist = google.maps.geometry.spherical.computeDistanceBetween(
+      originLocation, p.geometry.location);
+    if (dist > 1500) return;
+
+    // マーカー
+    new google.maps.Marker({
+      map,
+      position: p.geometry.location
+    });
+
 
   // 2. getDetails を Promise 化して並列取得
   const detailPromises = restaurants.map(p => new Promise(resolve => {
@@ -227,7 +237,7 @@ function drawResults(places, status) {
     }
 
 
-    (async () => {
+  (async () => {
   // 1) まずチャンク化
   const destChunks = chunkArray(destinations, CHUNK_SIZE);
   // 2) 各チャンクごとに Distance Matrix を await で回す
@@ -317,7 +327,7 @@ function drawResults(places, status) {
 }
 
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap">
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
 </script>
 </body>
 </html>
