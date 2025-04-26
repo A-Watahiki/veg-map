@@ -175,7 +175,6 @@ function drawResults(places, status) {
       position: p.geometry.location
     });
 
-
   // 2. getDetails を Promise 化して並列取得
   const detailPromises = restaurants.map(p => new Promise(resolve => {
     service.getDetails({
@@ -324,7 +323,7 @@ function drawResults(places, status) {
       sendHeightToParent();
     })();
   });
-}
+});
 
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
