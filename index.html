@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>ベジタリアン対応レストラン検索</title>
+  <!-- CSP を緩和：Google Maps + Google Fonts を許可 -->
   <meta http-equiv="Content-Security-Policy"
         content="
-          default-src 'self' https://maps.googleapis.com;
-          script-src  'self' https://maps.googleapis.com 'unsafe-inline';
-          style-src   'self' 'unsafe-inline';
-          img-src     'self' data:;
-          font-src    'self' data:;
-          connect-src https://maps.googleapis.com;
+          default-src  'self' https://maps.googleapis.com;
+          script-src   'self' https://maps.googleapis.com 'unsafe-inline';
+          style-src    'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src     'self' data: https://fonts.gstatic.com;
+          img-src      'self' data: https://maps.googleapis.com;
+          connect-src  'self' https://maps.googleapis.com;
         ">
   <style>
     body { font-family: sans-serif; margin:0; padding:1rem; }
