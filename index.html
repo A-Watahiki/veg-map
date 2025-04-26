@@ -5,14 +5,24 @@
   <title>ベジタリアン対応レストラン検索</title>
   <!-- CSP を緩和：Google Maps + Google Fonts を許可 -->
   <meta http-equiv="Content-Security-Policy"
-        content="
-          default-src  'self' https://maps.googleapis.com;
-          script-src   'self' https://maps.googleapis.com 'unsafe-inline' 'unsafe-eval';
-          style-src    'self' 'unsafe-inline' https://fonts.googleapis.com;
-          font-src     'self' data: https://fonts.gstatic.com;
-          img-src      'self' data: https://maps.googleapis.com https://maps.gstatic.com;
-          connect-src  'self' https://maps.googleapis.com https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net;
-        ">
+  content="
+    default-src        'self';
+    script-src         'self' 'unsafe-inline' 'unsafe-eval'
+                       https://maps.googleapis.com
+                       https://maps.gstatic.com;
+    style-src          'self' 'unsafe-inline'
+                       https://fonts.googleapis.com
+                       https://maps.gstatic.com;
+    img-src            'self' data:
+                       https://maps.googleapis.com
+                       https://maps.gstatic.com;
+    connect-src        'self'
+                       https://maps.googleapis.com
+                       https://maps.gstatic.com
+                       https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net;
+    font-src           'self' data:
+                       https://fonts.gstatic.com;
+  ">
   <style>
     body { font-family: sans-serif; margin:0; padding:1rem; }
     #map { width: 100%; height: 400px; margin-bottom:1rem; }
@@ -273,6 +283,7 @@ function drawResults(places, status) {
 }
 
 </script>
-
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap">
+</script>
 </body>
 </html>
