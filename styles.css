@@ -1,51 +1,33 @@
-/* リスト全体をグリッドに */
+/* リスト全体はグリッド解除して普通の縦リストに */
 #results {
   list-style: none;
-  padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  padding: 0;
 }
 
-/* 各アイテムをカード風に */
+/* 各アイテムを細長い行（フレックス）に */
 .result-item {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  padding: 16px;
   display: flex;
-  flex-direction: column;
-  transition: transform .2s, box-shadow .2s;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
 }
 
-/* ホバー時のアニメーション */
-.result-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-/* 店名リンク */
+/* 店名リンクは左側に伸ばす */
 .result-item a {
-  font-size: 1.1rem;
-  font-weight: 600;
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
   color: #2a4f9c;
   text-decoration: none;
-  margin-bottom: 8px;
 }
 
-/* メタ情報（住所・距離・時間・要確認） */
+/* メタ情報（住所・距離・時間・要確認）は右寄せ */
 .result-item .meta {
-  font-size: 0.9rem;
-  color: #555;
-  margin-top: auto; /* 下部に寄せる */
-  line-height: 1.4;
-}
-
-/* マーカーアイコンなどを入れたい場合は、before擬似要素で追加も可能 */
-.result-item::before {
-  content: "📍";
-  display: block;
-  font-size: 1.2rem;
-  margin-bottom: 4px;
+  font-size: 0.875rem;
+  color: #666;
+  margin-left: 1rem;
+  white-space: nowrap;
 }
