@@ -20,6 +20,7 @@
     #results li { margin:4px 0; }
     #controls { margin-bottom:1rem; }
   </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="controls">
@@ -156,6 +157,9 @@
 
         // リスト要素
         const li = document.createElement('li');
+        // ★カード風デザイン用クラスを追加
+        li.classList.add('result-item');
+
         const a  = document.createElement('a');
         a.href        = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
         a.textContent = d.name;
