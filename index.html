@@ -31,6 +31,7 @@
 
   <script>
     let map, service, autocomplete;
+
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 35.681236, lng: 139.767125 },
@@ -54,76 +55,79 @@
       });
     }
 
-  function searchNearby(location) {
-  const request = {
-    location,
-    radius: 1500,
-    type: 'restaurant',
-    keyword: 'vegetarian'
-  };
-  console.log('NearbySearch request=', request);
-  service.nearbySearch(request, drawResults);
-}
+    function searchNearby(location) {
+      const request = {
+        location,
+        radius: 1500,
+        type: 'restaurant',
+        keyword: 'vegetarian'
+      };
+      console.log('NearbySearch request=', request);
+      service.nearbySearch(request, drawResults);
+    }
 
+    function drawResults(places, status) {
+      const resultsEl = document.getElementById('results');
+      resultsEl.innerHTML = '';
 
-function drawResults(places, status) {
-  const resultsEl = document.getElementById('results');
-  resultsEl.innerHTML = '';
-
-  if (status !== google.maps.places.PlacesServiceStatus.OK) {
-    console.warn('検索失敗:', status);
-    return;
-  }
-
-  places.forEach(p => {
-    // ★ レストラン以外は除外
-    if (!p.types || !p.types.includes('restaurant')) return;
-
-    // ★ 詳細取得して servesVegetarianFood をチェック
-    service.getDetails({
-      placeId: p.place_id,
-      fields: [
-        'name',
-        'vicinity',
-        'geometry',
-        'place_id',
-        'serves_vegetarian_food'
-      ]
-    }, (detail, ds) => {
-      // ① ここで detail オブジェクトを丸ごと出力
-      console.log('getDetails response:', detail, 'status:', ds);
-      if (ds === google.maps.places.PlacesServiceStatus.OK
-          && detail.servesVegetarianFood) {
-        // マーカー設置
-        new google.maps.Marker({
-          map,
-          position: detail.geometry.location
-        });
-
-        // place_id から Google マップ URL を生成
-        const mapsUrl =
-          `https://www.google.com/maps/place/?q=place_id:${detail.place_id}`;
-
-        // リスト要素を作成
-        const li = document.createElement('li');
-        const a  = document.createElement('a');
-        a.href       = mapsUrl;
-        a.textContent= detail.name;
-        a.target     = '_blank';
-        a.rel        = 'noopener';
-        li.appendChild(a);
-        li.appendChild(
-          document.createTextNode(` — ${detail.vicinity}`)
-        );
-
-        resultsEl.appendChild(li);
+      if (status !== google.maps.places.PlacesServiceStatus.OK) {
+        console.warn('検索失敗:', status);
+        return;
       }
-    });
-  });
-}
 
+      places.forEach(p => {
+        if (!p.types || !p.types.includes('restaurant')) return;
+
+        service.getDetails({
+          placeId: p.place_id,
+          fields: [
+            'name',
+            'vicinity',
+            'geometry',
+            'place_id',
+            'serves_vegetarian_food'
+          ]
+        }, (detail, ds) => {
+          if (ds !== google.maps.places.PlacesServiceStatus.OK) return;
+
+          // マーカーを設置（全結果に）
+          new google.maps.Marker({
+            map,
+            position: detail.geometry.location
+          });
+
+          // place_id から Google マップ URL を生成
+          const mapsUrl =
+            `https://www.google.com/maps/place/?q=place_id:${detail.place_id}`;
+
+          // servesVegetarianFood フラグの有無をチェック
+          const hasFlag = detail.hasOwnProperty('servesVegetarianFood');
+          const isVeg   = detail.servesVegetarianFood === true;
+
+          // リスト要素作成
+          const li = document.createElement('li');
+          const a  = document.createElement('a');
+          a.href        = mapsUrl;
+          a.textContent = detail.name;
+          a.target      = '_blank';
+          a.rel         = 'noopener';
+          li.appendChild(a);
+
+          // 住所とフラグがない場合の要確認テキスト
+          let suffix = ` — ${detail.vicinity}`;
+          if (!hasFlag) {
+            suffix += ' （要確認）';
+          }
+          li.appendChild(document.createTextNode(suffix));
+
+          resultsEl.appendChild(li);
+        });
+      });
+    }
   </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap"> </script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap">
+  </script>
 </body>
 </html>
