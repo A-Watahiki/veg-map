@@ -189,7 +189,7 @@ function drawResults(places, status) {
   }); 
 
   // 2. getDetails を Promise 化して並列取得
-  const detailPromises = restaurants.map(p => new Promise(resolve => {
+  const detailPromises = filtered.map(p => new Promise(resolve => {
     service.getDetails({
       placeId: p.place_id,
       // ベジタリアンフラグは REST 経由で取得するため、
