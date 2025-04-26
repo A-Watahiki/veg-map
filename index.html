@@ -11,7 +11,7 @@
           style-src    'self' 'unsafe-inline' https://fonts.googleapis.com;
           font-src     'self' data: https://fonts.gstatic.com;
           img-src      'self' data: https://maps.googleapis.com https://maps.gstatic.com;
-          connect-src  'self' https://maps.googleapis.com;
+          connect-src  'self' https://maps.googleapis.com https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net;
         ">
   <style>
     body { font-family: sans-serif; margin:0; padding:1rem; }
@@ -32,7 +32,7 @@
 
   <script>
       let map, service, autocomplete, distanceService, originLocation;
-    function initMap() {
+      window.initMap = function() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 35.681236, lng: 139.767125 },
         zoom: 14
@@ -114,9 +114,35 @@
   window.parent.postMessage({ type: 'resize', height: h }, '*');
 }
 
+ // Cloud Function の URL に置き換えてください
+ const PROXY_URL =
+    'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag';
+
+  /**
+   * place_id を渡すと Cloud Function 経由で
+   * serves_vegetarian_food フラグを返す
+   */
+  async function fetchVegetarianFlag(placeId) {
+    try {
+      const res = await fetch(
+        `${PROXY_URL}?place_id=${encodeURIComponent(placeId)}`
+      );
+      if (!res.ok) {
+        console.error('Proxy error:', await res.text());
+        return undefined;
+      }
+      const json = await res.json();
+      return json.serves_vegetarian_food;  // true/false/undefined
+    } catch (e) {
+      console.error('Network error fetching vegetarian flag', e);
+      return undefined;
+    }
+  }
 
 function drawResults(places, status) {
   console.log('drawResults called with', places, status);
+
+
   const resultsEl = document.getElementById('results');
   resultsEl.innerHTML = '';
 
@@ -134,19 +160,29 @@ function drawResults(places, status) {
   const detailPromises = restaurants.map(p => new Promise(resolve => {
     service.getDetails({
       placeId: p.place_id,
+      // ベジタリアンフラグは REST 経由で取得するため、
+      // ここでは Maps JS API がサポートするフィールドのみ指定
       fields: [
         'name',
         'vicinity',
         'geometry',
-        'place_id',
-        'serves_vegetarian_food'
+        'place_id'
       ]
-    }, (detail, ds) => {
+    }, async (detail, ds) => {
       if (
         ds === google.maps.places.PlacesServiceStatus.OK &&
         detail.geometry &&
         detail.geometry.location
       ) {
+        try {
+          // Cloud Function 経由でベジタリアンフラグを取得
+          const flag = await fetchVegetarianFlag(detail.place_id);
+          // detail にプロパティとして追加
+          detail.servesVegetarianFood = flag;
+        } catch (e) {
+          console.error('Flag fetch error', e);
+          detail.servesVegetarianFood = undefined;
+        }
         resolve(detail);
       } else {
         resolve(null);
@@ -238,6 +274,5 @@ function drawResults(places, status) {
 
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap"> </script>
 </body>
 </html>
