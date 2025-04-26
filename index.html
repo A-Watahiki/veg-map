@@ -31,7 +31,6 @@
 
   <script>
     let map, service, autocomplete;
-
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 35.681236, lng: 139.767125 },
@@ -55,18 +54,20 @@
       });
     }
 
-    function searchNearby(location) {
-      const request = {
-        location,
-        radius: 1500,
-        type: 'restaurant',
-        keyword: 'vegetarian'
-      };
-      console.log('NearbySearch request=', request);
-      service.nearbySearch(request, drawResults);
-    }
+  function searchNearby(location) {
+  const request = {
+    location,
+    radius: 1500,
+    type: 'restaurant',
+    keyword: 'vegetarian'
+  };
+  console.log('NearbySearch request=', request);
+  service.nearbySearch(request, drawResults);
+}
 
-    function drawResults(places, status) {
+
+
+function drawResults(places, status) {
       const resultsEl = document.getElementById('results');
       resultsEl.innerHTML = '';
 
@@ -124,10 +125,9 @@
         });
       });
     }
-  </script>
 
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap">
-  </script>
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places&callback=initMap"> </script>
 </body>
 </html>
