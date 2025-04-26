@@ -55,19 +55,36 @@
         originLocation = place.geometry.location;
         map.setCenter(place.geometry.location);
         map.setZoom(15);
-        searchNearby(place.geometry.location);
+        multiKeywordSearch(place.geometry.location, ['vegetarian','vegan']);
       });
     }
 
-    function searchNearby(location) {
-    const request = {
-      location,
-      radius: 1500,
-      type: 'restaurant',
-      keyword: 'vegetarian vegan'
-    };
-    console.log('NearbySearch request=', request);
-    service.nearbySearch(request, drawResults);
+    function multiKeywordSearch(location, keywords) {
+    const allPromises = keywords.map(kw => new Promise(resolve => {
+      service.nearbySearch({
+        location,
+        radius: 1500,
+        type: 'restaurant',
+        keyword: kw
+      }, (results, status) => {
+        resolve(status === google.maps.places.PlacesServiceStatus.OK
+          ? results : []);
+      });
+    }));
+
+    Promise.all(allPromises).then(arrays => {
+      // flatten + place_idで重複除去
+      const merged = [];
+      const seen = new Set();
+      arrays.flat().forEach(p => {
+        if (!seen.has(p.place_id)) {
+          seen.add(p.place_id);
+          merged.push(p);
+        }
+      });
+      // 結果を drawResults に渡す（ステータスOK扱い）
+      drawResults(merged, google.maps.places.PlacesServiceStatus.OK);
+    });
   }
 
   function sendHeightToParent() {
