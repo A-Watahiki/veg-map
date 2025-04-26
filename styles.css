@@ -83,3 +83,12 @@
   border-color: #77B8D1;              /* Animotethics のライトブルー系 */  
   box-shadow: 0 0 0 3px rgba(119,184,209,0.3);  
 }
+
+
+/* 注記を小さく目立たせすぎずに表示 */
+.note {
+  font-size: 0.875rem;    /* 見出しより一段小さめ */
+  color: #666;            /* 薄めのグレーで主張を抑える */
+  margin: 0 0 1rem;       /* 下にちょっと余白 */
+  line-height: 1.4;       /* 読みやすい行間 */
+}
