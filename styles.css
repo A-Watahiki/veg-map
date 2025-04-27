@@ -39,9 +39,14 @@ h2 {
 }
 
 /* 各アイテムを細長い行（フレックス）に */
-/* マーカー hover 時に li も浮き上がらせる */
 .result-item {
-  transition: transform .2s, box-shadow .2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  margin: 0 10pt;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
 }
 
 /* 2. カラムをそれぞれ全体幅の1/3に固定 */
@@ -75,9 +80,11 @@ h2 {
 }
 
 .result-item:hover,
-.result-item.hover {
+.result-item:hover {
+  /* 少し上に持ち上げる */
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.16);
+  /* 影を強めて浮いて見えるように */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
 }
 
 /* 1) 検索バー全体をセンタリング */
