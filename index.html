@@ -25,6 +25,7 @@
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.gstatic.com;
   img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://maps.google.com;
   font-src 'self' data: https://fonts.gstatic.com;
+  frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://apis.google.com;
 ">
 
 
@@ -465,17 +466,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ③ Google 認証ハンドラ
   document.getElementById('btn-google-signin')
-    .addEventListener('click', async () => {
-      console.log('Google登録ボタン押下');
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        const result = await auth.signInWithPopup(provider);
-        alert(`${result.user.displayName}さん、ようこそ！`);
-      } catch (e) {
-        console.error(e);
-        alert('Google認証エラー: ' + e.message);
+  .addEventListener('click', async () => {
+    console.log('Google登録ボタン押下');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+      const result = await auth.signInWithPopup(provider);
+      alert(`${result.user.displayName}さん、ようこそ！`);
+    } catch (e) {
+      // ユーザーがポップアップを閉じた場合は無視
+      if (e.code === 'auth/popup-closed-by-user') {
+        console.log('ユーザーによりポップアップが閉じられました');
+        return;
       }
-    });
+      console.error(e);
+      alert('Google認証エラー: ' + e.message);
+    }
+  });
+
 
   // ④ ログインフォームの開閉＆ログイン実行
   // 「既にアカウントをお持ちの方はこちら」リンク
