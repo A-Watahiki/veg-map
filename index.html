@@ -441,33 +441,70 @@ function drawResults(places, status) {
 document.addEventListener('DOMContentLoaded', () => {
   const auth = firebase.auth();
 
-  // ① 新規登録フォームを開く
-  document.getElementById('btn-email-show').addEventListener('click', () => {
-    document.getElementById('signup-methods').style.display = 'none';
-    document.getElementById('signup-form').style.display    = 'block';
-  });
+  // ① メール登録フォームを開く
+  document.getElementById('btn-email-show')
+    .addEventListener('click', () => {
+      document.getElementById('signup-methods').style.display = 'none';
+      document.getElementById('signup-form').style.display    = 'block';
+    });
 
-  // ② メール登録のハンドラ
-  document.getElementById('btn-email-signup').addEventListener('click', async () => {
-    console.log('メール登録ボタン押下');
-    const email = document.getElementById('signup-email').value;
-    const pwd   = document.getElementById('signup-password').value;
-    // …残り createUserWithEmailAndPassword
-  });
+  // ② 実際にアカウントを作成
+  document.getElementById('btn-email-signup')
+    .addEventListener('click', async () => {
+      console.log('メール登録ボタン押下');
+      const email = document.getElementById('signup-email').value;
+      const pwd   = document.getElementById('signup-password').value;
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+        await cred.user.sendEmailVerification();
+        alert('登録完了! 確認メールを送信しました。');
+      } catch (e) {
+        alert('登録エラー: ' + e.message);
+      }
+    });
 
   // ③ Google 認証ハンドラ
-  document.getElementById('btn-google-signin').addEventListener('click', async () => {
-    console.log('Google登録ボタン押下');
-    // …signInWithPopup
-  });
+  document.getElementById('btn-google-signin')
+    .addEventListener('click', async () => {
+      console.log('Google登録ボタン押下');
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        alert(`${result.user.displayName}さん、ようこそ！`);
+      } catch (e) {
+        console.error(e);
+        alert('Google認証エラー: ' + e.message);
+      }
+    });
 
-  // ④ ログインフォームの開閉＆ハンドラ
-  // （省略）
+  // ④ ログインフォームの開閉＆ログイン実行
+  // 「既にアカウントをお持ちの方はこちら」リンク
+  document.getElementById('link-to-login')
+    .addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('signup-methods').style.display = 'none';
+      document.getElementById('signup-form').style.display    = 'none';
+      document.getElementById('login-form').style.display     = 'block';
+    });
 
-  // ⑤ 認証状態で UI 切り替え
+  // ログインボタン
+  document.getElementById('btn-login')
+    .addEventListener('click', async () => {
+      console.log('ログインボタン押下');
+      const email = document.getElementById('login-email').value;
+      const pwd   = document.getElementById('login-password').value;
+      try {
+        await auth.signInWithEmailAndPassword(email, pwd);
+        alert('ログイン成功！');
+      } catch (e) {
+        alert('ログインエラー: ' + e.message);
+      }
+    });
+
+  // ⑤ 認証状態を監視して表示切り替え
   auth.onAuthStateChanged(user => {
     document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
-    document.getElementById('controls')   .style.display = user ? 'flex' : 'none';
+    document.getElementById('controls'   ).style.display = user ? 'flex' : 'none';
   });
 });
 </script>
