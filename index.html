@@ -50,6 +50,11 @@
 
   <link rel="stylesheet" href="styles.css">
 </head>
+<script>
+  // Firebase SDK 読み込み＆initializeAppの後で
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
+</script>
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
@@ -81,6 +86,14 @@
   </div>
 </div>
 <!-- ここまで認証フォーム -->
+<!-- ユーザー名照合フォーム（ログイン後に表示） -->
+<div id="username-verification" style="display:none; margin:1rem 0;">
+  <h3>ユーザー名の確認</h3>
+  <p>ご所属の名簿に掲載されている「ユーザー名」を入力してください。</p>
+  <input id="username-input" type="text" placeholder="ユーザー名を入力" />
+  <button id="btn-verify-username">確認</button>
+  <p id="username-error" style="color:red; display:none;">ユーザー名が名簿と一致しません。</p>
+</div>
 
 
   <div id="controls" style="display: none;">
@@ -440,8 +453,6 @@ function drawResults(places, status) {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const auth = firebase.auth();
-
   // ① メール登録フォームを開く
   document.getElementById('btn-email-show')
     .addEventListener('click', () => {
@@ -484,6 +495,62 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
+  // 既存の onAuthStateChanged を拡張
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      // 未ログイン：認証UIだけ
+      document.getElementById('auth-forms').style.display          = 'block';
+      document.getElementById('username-verification').style.display = 'none';
+      document.getElementById('controls').style.display            = 'none';
+    } else {
+      // ログイン済み：まずユーザー名照合フォームを表示
+      document.getElementById('auth-forms').style.display          = 'none';
+      document.getElementById('username-verification').style.display = 'block';
+      document.getElementById('controls').style.display            = 'none';
+    }
+  });
+
+  // ユーザー名の照合ボタン
+  document.getElementById('btn-verify-username')
+    .addEventListener('click', async () => {
+      const inputName = document.getElementById('username-input').value.trim();
+      const errorEl   = document.getElementById('username-error');
+
+      if (!inputName) {
+        errorEl.textContent = 'ユーザー名を入力してください。';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        // Firestore に “allowedUsers” コレクションを作っておき、
+        // ドキュメントIDを許可するユーザー名として管理しておく想定
+        const doc = await db.collection('allowedUsers').doc(inputName).get();
+        if (!doc.exists) {
+          // 名簿にない場合
+          errorEl.textContent = 'ユーザー名が名簿と一致しません。';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        // 照合OK
+        errorEl.style.display = 'none';
+        // 必要なら Firestore にマッピング保存
+        await db.collection('users').doc(auth.currentUser.uid).set({
+          username: inputName,
+          verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        // 検索UIを表示
+        document.getElementById('username-verification').style.display = 'none';
+        document.getElementById('controls').style.display              = 'flex';
+      } catch (e) {
+        console.error(e);
+        errorEl.textContent = '通信エラーが発生しました。';
+        errorEl.style.display = 'block';
+      }
+    });
+
   // ④ ログインフォームの開閉＆ログイン実行
   // 「既にアカウントをお持ちの方はこちら」リンク
   document.getElementById('link-to-login')
@@ -508,11 +575,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-  // ⑤ 認証状態を監視して表示切り替え
-  auth.onAuthStateChanged(user => {
-    document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
-    document.getElementById('controls'   ).style.display = user ? 'flex' : 'none';
-  });
 });
 </script>
 
