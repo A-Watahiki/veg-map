@@ -170,12 +170,12 @@
         return undefined;
       }
       const json = await res.json();
+      const flag = json.serves_vegetarian_food;
       if (typeof flag === 'boolean') {
         // boolean のときだけ localStorage に保存
         localStorage.setItem(storageKey, JSON.stringify(flag));
       }
       // 3) フェッチ結果をキャッシュに保存
-      const flag = json.serves_vegetarian_food;
       vegetarianFlagCache[placeId] = flag;
       localStorage.setItem(storageKey, JSON.stringify(flag));
       return flag;
