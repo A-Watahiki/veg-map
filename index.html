@@ -450,62 +450,33 @@ function drawResults(places, status) {
 
 </script>
 
-document.addEventListener('DOMContentLoaded', () => {
-  const auth = firebase.auth();
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const auth = firebase.auth();
 
-  // ① フォームを開く
-  document.getElementById('btn-email-show')
-    .addEventListener('click', () => {
-      document.getElementById('signup-methods').style.display = 'none';
-      document.getElementById('signup-form').style.display    = 'block';
+    // メールフォームを開くボタンなど
+    document.getElementById('btn-email-show')
+      .addEventListener('click', () => { /* … */ });
+
+    // 実際に登録するボタン
+    document.getElementById('btn-email-signup')
+      .addEventListener('click', async () => { /* … */ });
+
+    // Google 認証
+    document.getElementById('btn-google-signin')
+      .addEventListener('click', async () => { /* … */ });
+
+    // ログイン
+    document.getElementById('btn-login')
+      .addEventListener('click', async () => { /* … */ });
+
+    // 認証状態監視
+    auth.onAuthStateChanged(user => {
+      document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
+      document.getElementById('controls'   ).style.display = user ? 'flex' : 'none';
     });
-
-  // ② 実際にアカウントを作成
-  document.getElementById('btn-email-signup')
-    .addEventListener('click', async () => {
-      const email = document.getElementById('signup-email').value;
-      const pwd   = document.getElementById('signup-password').value;
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, pwd);
-        await cred.user.sendEmailVerification();
-        alert('登録完了! 確認メールを送信しました。');
-      } catch (e) {
-        alert('登録エラー: ' + e.message);
-      }
-    });
-
-  // ③ Google 認証
-  document.getElementById('btn-google-signin')
-    .addEventListener('click', async () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        const result = await auth.signInWithPopup(provider);
-        alert(`${result.user.displayName}さん、ようこそ！`);
-      } catch (e) {
-        alert('Google認証エラー: ' + e.message);
-      }
-    });
-
-  // ④ ログイン
-  document.getElementById('btn-login')
-    .addEventListener('click', async () => {
-      const email = document.getElementById('login-email').value;
-      const pwd   = document.getElementById('login-password').value;
-      try {
-        await auth.signInWithEmailAndPassword(email, pwd);
-        alert('ログイン成功！');
-      } catch (e) {
-        alert('ログインエラー: ' + e.message);
-      }
-    });
-
-  // ⑤ 認証状態を監視してフォーム切り替え
-  auth.onAuthStateChanged(user => {
-    document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
-    document.getElementById('controls'   ).style.display = user ? 'flex' : 'none';
   });
-});
-
+</script>
 
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
