@@ -70,7 +70,9 @@
 <script>
   // Firebase SDK 読み込み＆initializeAppの後で
   const auth = firebase.auth();
-  const db   = firebase.firestore();
+  const db = firebase.firestore(undefined, {
+  databaseId: 'veg-map'  // ← ここを明示的に指定
+});
 </script>
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
