@@ -17,6 +17,7 @@ h2 {
   /* スティッキーコンテナとして振る舞わせる */
   position: relative;
   /* 必要なら height を指定 or auto でも OK */
+  overflow: visible;
 }
 
 
@@ -26,7 +27,7 @@ h2 {
   width: 100%;
   height: 400px;
   margin-bottom: 1rem;
-  z-index: 1000;
+  z-index: 100;
 }
 
 /* リスト全体はグリッド解除して普通の縦リストに */
@@ -34,6 +35,10 @@ h2 {
   list-style: none;
   margin: 0;
   padding: 0;
+  /* map 高さ分だけ上に引き上げて… */
+  margin-top: -400px;
+  /* …見た目上の先頭分を確保 */
+  padding-top: 400px;
 }
 
 /* 各アイテムを細長い行（フレックス）に */
