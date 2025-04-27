@@ -64,10 +64,9 @@ body {
   white-space: nowrap;
 }
 
-.result-item:hover {
-  /* 少し上に持ち上げる */
+.result-item:hover,
+.result-item.hover {
   transform: translateY(-4px);
-  /* 影を強めて浮いて見えるように */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
 }
 
