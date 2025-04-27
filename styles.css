@@ -13,6 +13,13 @@ h2 {
   position: relative; /* 必要なら */
 }
 
+.map-container {
+  /* スティッキーコンテナとして振る舞わせる */
+  position: relative;
+  /* 必要なら height を指定 or auto でも OK */
+}
+
+
 #map {
   position: sticky;
   top: 0;
