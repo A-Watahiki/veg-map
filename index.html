@@ -132,15 +132,30 @@
   window.parent.postMessage({ type: 'resize', height: h }, '*');
 }
 
- // Cloud Function の URL に置き換えてください
  const PROXY_URL =
     'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag';
+
+  // メモリ上キャッシュ用オブジェクト
+  const vegetarianFlagCache = {};
 
   /**
    * place_id を渡すと Cloud Function 経由で
    * serves_vegetarian_food フラグを返す
    */
   async function fetchVegetarianFlag(placeId) {
+   // 1) まずメモリキャッシュをチェック
+   if (vegetarianFlagCache[placeId] !== undefined) {
+     return vegetarianFlagCache[placeId];
+   }
+   // 2) localStorage キャッシュをチェック
+   const storageKey = `vegFlag_${placeId}`;
+   const stored = localStorage.getItem(storageKey);
+   if (stored !== null) {
+     const flag = JSON.parse(stored);
+     vegetarianFlagCache[placeId] = flag;
+     return flag;
+   }
+
     try {
       const res = await fetch(
         `${PROXY_URL}?place_id=${encodeURIComponent(placeId)}`
@@ -150,7 +165,11 @@
         return undefined;
       }
       const json = await res.json();
-      return json.serves_vegetarian_food;  // true/false/undefined
+      // 3) フェッチ結果をキャッシュに保存
+      const flag = json.serves_vegetarian_food;
+      vegetarianFlagCache[placeId] = flag;
+      localStorage.setItem(storageKey, JSON.stringify(flag));
+      return flag;
     } catch (e) {
       console.error('Network error fetching vegetarian flag', e);
       return undefined;
