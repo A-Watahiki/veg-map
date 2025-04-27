@@ -10,7 +10,8 @@
     script-src         'self' 'unsafe-inline' 'unsafe-eval'
                        https://maps.googleapis.com
                        https://maps.gstatic.com
-                       https://www.gstatic.com;
+                       https://www.gstatic.com
+                       https://apis.google.com;
 
     style-src          'self' 'unsafe-inline'
                        https://fonts.googleapis.com
@@ -23,7 +24,10 @@
                        https://maps.googleapis.com
                        https://maps.gstatic.com
                        https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
-                       https://identitytoolkit.googleapis.com;
+                       https://identitytoolkit.googleapis.com
+                       https://securetoken.googleapis.com
+                       https://accounts.google.com
+                       https://www.googleapis.com;
     font-src           'self' data:
                        https://fonts.gstatic.com;
   ">
@@ -53,25 +57,32 @@
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
 <!-- ここから認証フォーム -->
-  <div id="auth-forms">
-    <!-- サインアップ -->
-    <div id="signup-methods">
-      <!-- メール -->
-      <button id="btn-email-signup">メールで登録</button>
-      <!-- Google -->
-      <button id="btn-google-signin">Google で続行</button>
-    </div>
-
-    <!-- ログイン -->
-    <div id="login-form" style="display:none">
-      <h3>ログイン</h3>
-      <input id="login-email"    type="email"    placeholder="メールアドレス" />
-      <input id="login-password" type="password" placeholder="パスワード" />
-      <button id="btn-login">ログイン</button>
-    </div>
+<div id="auth-forms">
+  <!-- サインアップ／選択メソッド -->
+  <div id="signup-methods">
+    <!-- フォームを開くだけのボタンなので id を別に -->
+    <button id="btn-email-show">メールで登録</button>
+    <button id="btn-google-signin">Google で続行</button>
   </div>
 
+  <!-- メール登録フォーム（最初は非表示） -->
+  <div id="signup-form" style="display:none; margin-top:1rem;">
+    <h3>メールで新規登録</h3>
+    <input id="signup-email"    type="email"    placeholder="メールアドレス" />
+    <input id="signup-password" type="password" placeholder="パスワード（6文字以上）" />
+    <!-- こちらが本当の「登録する」ボタン -->
+    <button id="btn-email-signup">登録する</button>
+    <p><a href="#" id="link-to-login">既にアカウントをお持ちの方はこちら</a></p>
+  </div>
 
+  <!-- ログインフォーム -->
+  <div id="login-form" style="display:none">
+    <h3>ログイン</h3>
+    <input id="login-email"    type="email"    placeholder="メールアドレス" />
+    <input id="login-password" type="password" placeholder="パスワード" />
+    <button id="btn-login">ログイン</button>
+  </div>
+</div>
 <!-- ここまで認証フォーム -->
 
 
@@ -439,68 +450,62 @@ function drawResults(places, status) {
 
 </script>
 
-<script>
-  // 1) Firebase App／Auth の初期化が済んでいること
+document.addEventListener('DOMContentLoaded', () => {
   const auth = firebase.auth();
 
-  // 2) サインアップボタンのハンドラ登録
-  document.getElementById('btn-email-signup').addEventListener('click', async () => {
-    const email = document.getElementById('signup-email').value;
-    const pwd   = document.getElementById('signup-password').value;
-    try {
-      const cred = await auth.createUserWithEmailAndPassword(email, pwd);
-      await cred.user.sendEmailVerification(); // メール確認を送りたい場合
-      alert('登録完了！確認メールを送信しました。');
-    } catch (e) {
-      alert('登録エラー: ' + e.message);
-    }
-  });
+  // ① フォームを開く
+  document.getElementById('btn-email-show')
+    .addEventListener('click', () => {
+      document.getElementById('signup-methods').style.display = 'none';
+      document.getElementById('signup-form').style.display    = 'block';
+    });
 
-  // 3) ログインボタンのハンドラも同様にここで登録
-  document.getElementById('btn-login').addEventListener('click', async () => {
-    const email = document.getElementById('login-email').value;
-    const pwd   = document.getElementById('login-password').value;
-    try {
-      await auth.signInWithEmailAndPassword(email, pwd);
-    } catch (e) {
-      alert('ログインエラー: ' + e.message);
-    }
-  });
-
-  // ─── Google プロバイダでのサインイン／サインアップ ───
-  document.getElementById('btn-google-signin').addEventListener('click', async () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    try {
-      const result = await auth.signInWithPopup(provider);
-      // 初回のみユーザー情報作成、あるいは既存ユーザーにログイン
-      const user = result.user;
-      if (result.additionalUserInfo.isNewUser) {
-        alert(`ようこそ、${user.displayName}さん！アカウントを作成しました。`);
-      } else {
-        alert(`こんにちは、${user.displayName}さん！ログインしました。`);
+  // ② 実際にアカウントを作成
+  document.getElementById('btn-email-signup')
+    .addEventListener('click', async () => {
+      const email = document.getElementById('signup-email').value;
+      const pwd   = document.getElementById('signup-password').value;
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+        await cred.user.sendEmailVerification();
+        alert('登録完了! 確認メールを送信しました。');
+      } catch (e) {
+        alert('登録エラー: ' + e.message);
       }
-    } catch (e) {
-      alert('Google 認証エラー: ' + e.message);
-    }
-  });
+    });
 
+  // ③ Google 認証
+  document.getElementById('btn-google-signin')
+    .addEventListener('click', async () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        alert(`${result.user.displayName}さん、ようこそ！`);
+      } catch (e) {
+        alert('Google認証エラー: ' + e.message);
+      }
+    });
 
+  // ④ ログイン
+  document.getElementById('btn-login')
+    .addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value;
+      const pwd   = document.getElementById('login-password').value;
+      try {
+        await auth.signInWithEmailAndPassword(email, pwd);
+        alert('ログイン成功！');
+      } catch (e) {
+        alert('ログインエラー: ' + e.message);
+      }
+    });
 
-  // ─── 認証状態を監視して UI 切り替え ───
+  // ⑤ 認証状態を監視してフォーム切り替え
   auth.onAuthStateChanged(user => {
-    const methods = document.getElementById('signup-methods');
-    const controls = document.getElementById('controls');
-    if (user) {
-      // ログイン済み
-      methods.style.display = 'none';
-      controls.style.display = 'flex';  // 検索フォームなどを表示
-    } else {
-      // 未ログイン
-      methods.style.display = 'block';
-      controls.style.display = 'none';
-    }
+    document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
+    document.getElementById('controls'   ).style.display = user ? 'flex' : 'none';
   });
-</script>
+});
+
 
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
