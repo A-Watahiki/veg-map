@@ -451,31 +451,38 @@ function drawResults(places, status) {
 </script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const auth = firebase.auth();
+document.addEventListener('DOMContentLoaded', () => {
+  const auth = firebase.auth();
 
-    // メールフォームを開くボタンなど
-    document.getElementById('btn-email-show')
-      .addEventListener('click', () => { /* … */ });
-
-    // 実際に登録するボタン
-    document.getElementById('btn-email-signup')
-      .addEventListener('click', async () => { /* … */ });
-
-    // Google 認証
-    document.getElementById('btn-google-signin')
-      .addEventListener('click', async () => { /* … */ });
-
-    // ログイン
-    document.getElementById('btn-login')
-      .addEventListener('click', async () => { /* … */ });
-
-    // 認証状態監視
-    auth.onAuthStateChanged(user => {
-      document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
-      document.getElementById('controls'   ).style.display = user ? 'flex' : 'none';
-    });
+  // ① 新規登録フォームを開く
+  document.getElementById('btn-email-show').addEventListener('click', () => {
+    document.getElementById('signup-methods').style.display = 'none';
+    document.getElementById('signup-form').style.display    = 'block';
   });
+
+  // ② メール登録のハンドラ
+  document.getElementById('btn-email-signup').addEventListener('click', async () => {
+    console.log('メール登録ボタン押下');
+    const email = document.getElementById('signup-email').value;
+    const pwd   = document.getElementById('signup-password').value;
+    // …残り createUserWithEmailAndPassword
+  });
+
+  // ③ Google 認証ハンドラ
+  document.getElementById('btn-google-signin').addEventListener('click', async () => {
+    console.log('Google登録ボタン押下');
+    // …signInWithPopup
+  });
+
+  // ④ ログインフォームの開閉＆ハンドラ
+  // （省略）
+
+  // ⑤ 認証状態で UI 切り替え
+  auth.onAuthStateChanged(user => {
+    document.getElementById('auth-forms').style.display = user ? 'none' : 'block';
+    document.getElementById('controls')   .style.display = user ? 'flex' : 'none';
+  });
+});
 </script>
 
 
