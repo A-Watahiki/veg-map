@@ -1,13 +1,11 @@
 // firebase-init.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-// modular Firestore 初期化用
+import { getAuth        } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import {
   initializeFirestore,
-  persistentLocalCache,
-  experimentalForceLongPolling,
-  useFetchStreams
+  persistentLocalCache
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY",
@@ -19,20 +17,25 @@ const firebaseConfig = {
   measurementId: "G-TLC59XH1R5"
 };
 
+
 // Firebase アプリ初期化
 const app = initializeApp(firebaseConfig);
 
-// Auth 初期化（これは今まで通り）
+// Auth
 export const auth = getAuth(app);
 
-// Firestore を “long-polling” で強制起動
+// Firestore をロングポーリング強制＋キャッシュ有効化
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabMultiWindowSharedClientState: true }),
-  experimentalForceLongPolling: true,
-  // 通常ストリームが効かない環境であれば fetchStreams 停止
-  useFetchStreams: false,
+  localCache: persistentLocalCache(),   // Tab 間キャッシュ共有
+  experimentalForceLongPolling: true,   // WebChannel 失敗時は常に長輪受信
+  useFetchStreams: false                // fetchStreams を使わず XHR
 });
 
-// デバッグ用にグローバルにも
-window.db   = db;
+// デバッグ用にグローバルにも置く
 window.auth = auth;
+window.db   = db;
+
+// initMap 登録用ヘルパー
+export function registerInitMap(fn) {
+  window.initMap = fn;
+}

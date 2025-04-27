@@ -1,5 +1,5 @@
 // main.js
-import { auth, db } from './firebase-init.js';
+import { auth, db, registerInitMap } from './firebase-init.js';
 
 // Auth functions from CDN build
 import {
@@ -54,8 +54,7 @@ function initMap() {
     });
 }
 
-// Google Maps API が呼ぶコールバックとして公開
-window.initMap = initMap;
+registerInitMap(initMap);
 
 // ──────────────
 // 2) 検索ロジック
