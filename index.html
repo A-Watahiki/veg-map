@@ -444,7 +444,7 @@ function drawResults(places, status) {
   const auth = firebase.auth();
 
   // 2) サインアップボタンのハンドラ登録
-  document.getElementById('btn-signup').addEventListener('click', async () => {
+  document.getElementById('btn-email-signup').addEventListener('click', async () => {
     const email = document.getElementById('signup-email').value;
     const pwd   = document.getElementById('signup-password').value;
     try {
