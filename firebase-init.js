@@ -21,14 +21,15 @@ const firebaseConfig = {
 // Firebase アプリ初期化
 const app = initializeApp(firebaseConfig);
 
-// Auth
+// 認証
 export const auth = getAuth(app);
 
-// Firestore をロングポーリング強制＋キャッシュ有効化
+// 「veg-map」という名前のデータベースを指定する
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache(),   // Tab 間キャッシュ共有
-  experimentalForceLongPolling: true,   // WebChannel 失敗時は常に長輪受信
-  useFetchStreams: false                // fetchStreams を使わず XHR
+  databaseId: 'veg-map',               // ← ここで既存 DB 名を指定
+  localCache: persistentLocalCache(),  
+  experimentalForceLongPolling: true,
+  useFetchStreams: false,
 });
 
 // デバッグ用にグローバルにも置く
