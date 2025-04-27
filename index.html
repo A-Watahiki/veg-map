@@ -4,32 +4,28 @@
   <meta charset="UTF-8">
   <title>ベジタリアン対応レストラン検索</title>
   <!-- CSP を緩和：Google Maps + Google Fonts を許可 -->
-  <meta http-equiv="Content-Security-Policy"
-  content="
-    default-src        'self';
-    script-src         'self' 'unsafe-inline' 'unsafe-eval'
-                       https://maps.googleapis.com
-                       https://maps.gstatic.com
-                       https://www.gstatic.com
-                       https://apis.google.com
-                       https://accounts.google.com;
-    connect-src        'self'
-                       https://maps.googleapis.com
-                       https://maps.gstatic.com
-                       https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
-                       https://securetoken.googleapis.com
-                       https://accounts.google.com
-                       https://www.googleapis.com;
-    style-src          'self' 'unsafe-inline'
-                       https://fonts.googleapis.com
-                       https://maps.gstatic.com;
-    img-src            'self' data:
-                       https://maps.googleapis.com
-                       https://maps.gstatic.com
-                       https://maps.google.com;
-    font-src           'self' data:
-                       https://fonts.gstatic.com;
-  ">
+  <meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 
+    'self' 'unsafe-inline' 'unsafe-eval'
+    https://maps.googleapis.com
+    https://maps.gstatic.com
+    https://www.gstatic.com
+    https://apis.google.com
+    https://accounts.google.com;
+  connect-src
+    'self'
+    https://maps.googleapis.com
+    https://maps.gstatic.com
+    https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
+    https://identitytoolkit.googleapis.com
+    https://securetoken.googleapis.com
+    https://accounts.google.com
+    https://www.googleapis.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.gstatic.com;
+  img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://maps.google.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+">
 
 
   <!-- Firebase SDK -->
