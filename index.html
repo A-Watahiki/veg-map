@@ -150,11 +150,16 @@
    // 2) localStorage キャッシュをチェック
    const storageKey = `vegFlag_${placeId}`;
    const stored = localStorage.getItem(storageKey);
-   if (stored !== null) {
-     const flag = JSON.parse(stored);
-     vegetarianFlagCache[placeId] = flag;
-     return flag;
-   }
+  if (stored !== null && stored !== 'undefined') {
+    try {
+      const flag = JSON.parse(stored);
+      vegetarianFlagCache[placeId] = flag;
+      return flag;
+    } catch (e) {
+      // 万が一 parse に失敗したらキャッシュクリアしてフェッチにフォールバック
+      localStorage.removeItem(storageKey);
+    }
+  }
 
     try {
       const res = await fetch(
@@ -165,6 +170,10 @@
         return undefined;
       }
       const json = await res.json();
+      if (typeof flag === 'boolean') {
+        // boolean のときだけ localStorage に保存
+        localStorage.setItem(storageKey, JSON.stringify(flag));
+      }
       // 3) フェッチ結果をキャッシュに保存
       const flag = json.serves_vegetarian_food;
       vegetarianFlagCache[placeId] = flag;
