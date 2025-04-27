@@ -15,7 +15,7 @@ h2 {
 
 #map {
   position: sticky;
-  /* top は JavaScript で設定します */
+  top: 0;
   width: 100%;
   height: 400px;
   margin-bottom: 1rem;
