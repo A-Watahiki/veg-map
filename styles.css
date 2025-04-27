@@ -18,6 +18,7 @@ h2 {
   position: relative;
   /* 必要なら height を指定 or auto でも OK */
   overflow: visible;
+  border-top: 1px solid transparent;
 }
 
 
@@ -35,21 +36,12 @@ h2 {
   list-style: none;
   margin: 0;
   padding: 0;
-  /* map 高さ分だけ上に引き上げて… */
-  margin-top: -400px;
-  /* …見た目上の先頭分を確保 */
-  padding-top: 400px;
 }
 
 /* 各アイテムを細長い行（フレックス）に */
+/* マーカー hover 時に li も浮き上がらせる */
 .result-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  margin: 0 10pt;
-  border-bottom: 1px solid #e0e0e0;
-  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
 }
 
 /* 2. カラムをそれぞれ全体幅の1/3に固定 */
@@ -82,11 +74,10 @@ h2 {
   white-space: nowrap;
 }
 
-.result-item:hover {
-  /* 少し上に持ち上げる */
+.result-item:hover,
+.result-item.hover {
   transform: translateY(-4px);
-  /* 影を強めて浮いて見えるように */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.16);
 }
 
 /* 1) 検索バー全体をセンタリング */
