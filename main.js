@@ -1,4 +1,3 @@
-// main.js
 import { auth, db, registerInitMap } from './firebase-init.js';
 
 // Auth functions from CDN build
@@ -20,6 +19,11 @@ import {
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 let map, service, autocomplete, distanceService, originLocation;
+
+// Firestore 初期化完了イベントの待機処理
+window.addEventListener('firebaseReady', () => {
+  console.log('Firebase準備完了、Firestore利用可能');
+  
 
 // ──────────────
 // 1) Google Maps 初期化

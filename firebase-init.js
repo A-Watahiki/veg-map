@@ -1,7 +1,7 @@
 // firebase-init.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getAuth        } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-import {
+import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { 
   initializeFirestore,
   persistentLocalCache
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
@@ -21,18 +21,21 @@ const firebaseConfig = {
 // Firebase アプリ初期化
 const app = initializeApp(firebaseConfig);
 
-// 認証
+// Auth
 export const auth = getAuth(app);
 
-// 「veg-map」という名前のデータベースを指定する
+// Firestore 初期化 (デフォルトDB、databaseId指定なし)
 export const db = initializeFirestore(app, {
-  databaseId: 'veg-map',               // ← ここで既存 DB 名を指定
-  localCache: persistentLocalCache(),  
-  experimentalForceLongPolling: true,
-  useFetchStreams: false,
+  localCache: persistentLocalCache(),   // Tab間キャッシュ共有
+  experimentalForceLongPolling: true,   // WebChannel失敗時は常にロングポーリング
+  useFetchStreams: false                // fetchStreamsを使わずXHR
 });
 
-// デバッグ用にグローバルにも置く
+// Firebase初期化完了を通知するイベントを発火
+const firebaseReadyEvent = new Event('firebaseReady');
+window.dispatchEvent(firebaseReadyEvent);
+
+// デバッグ用グローバル公開
 window.auth = auth;
 window.db   = db;
 
