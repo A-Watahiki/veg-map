@@ -528,6 +528,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Firestore に “allowedUsers” コレクションを作っておき、
         // ドキュメントIDを許可するユーザー名として管理しておく想定
         const doc = await db.collection('allowedUsers').doc(inputName).get();
+        // ここで取得結果を出力
+        if (doc.exists) {
+          console.log('allowedUsers のドキュメント:', doc.data());
+        } else {
+          console.log('allowedUsers に該当ドキュメントがありません:', inputName);
+        }
+
         if (!doc.exists) {
           // 名簿にない場合
           errorEl.textContent = 'ユーザー名が名簿と一致しません。';
