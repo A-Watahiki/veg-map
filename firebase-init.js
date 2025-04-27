@@ -19,4 +19,4 @@ const app = initializeApp(firebaseConfig);
 
 // 認証とFirestoreを初期化
 export const auth = getAuth(app);
-export const db   = getFirestore(app, { databaseId: 'veg-map' });
+export const db   = getFirestore(app);
