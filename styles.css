@@ -5,30 +5,14 @@ body {
   padding: 1rem;
 }
 
-h2 {
-  margin: 0;
-  padding: 1rem 0;
-  background: white;  /* map の下に隠れないように */
-  z-index: 1001;      /* map より上に出す */
-  position: relative; /* 必要なら */
-}
-
-.map-container {
-  /* スティッキーコンテナとして振る舞わせる */
-  position: relative;
-  /* 必要なら height を指定 or auto でも OK */
-  overflow: visible;
-  border-top: 1px solid transparent;
-}
-
-
+/* マップ */
 #map {
-  position: sticky;
-  top: 0;
+  position: sticky;   /* スクロールしても上部に貼り付き */
+  top: 0;             /* ビューポートの上端に */
+  z-index: 1000;      /* 他要素の上に出す */
   width: 100%;
   height: 400px;
   margin-bottom: 1rem;
-  z-index: 100;
 }
 
 /* リスト全体はグリッド解除して普通の縦リストに */
@@ -48,6 +32,7 @@ h2 {
   border-bottom: 1px solid #e0e0e0;
   cursor: pointer;
 }
+
 
 /* 2. カラムをそれぞれ全体幅の1/3に固定 */
 .result-item > div {
@@ -79,7 +64,6 @@ h2 {
   white-space: nowrap;
 }
 
-.result-item:hover,
 .result-item:hover {
   /* 少し上に持ち上げる */
   transform: translateY(-4px);
@@ -130,6 +114,7 @@ h2 {
   border-color: #77B8D1;              /* Animotethics のライトブルー系 */  
   box-shadow: 0 0 0 3px rgba(119,184,209,0.3);  
 }
+
 
 /* 注記を小さく目立たせすぎずに表示 */
 .note {
