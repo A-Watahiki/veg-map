@@ -1,7 +1,8 @@
 // firebase-init.js
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getAuth        } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getFirestore   } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
 
 // あなたの Firebase 設定
 const firebaseConfig = {
