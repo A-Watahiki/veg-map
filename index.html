@@ -35,12 +35,13 @@
   <script>
     // Your web app's Firebase configuration
     const firebaseConfig = {
-      apiKey: "AIzaSy…",                
-      authDomain: "veg-map.firebaseapp.com",
-      projectId: "veg-map",
-      storageBucket: "veg-map.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:abcdef123456"
+      apiKey: "AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY",
+      authDomain: "blissful-shore-458002-e9.firebaseapp.com",
+      projectId: "blissful-shore-458002-e9",
+      storageBucket: "blissful-shore-458002-e9.firebasestorage.app",
+      messagingSenderId: "570582104108",
+      appId: "1:570582104108:web:87c3efeadafc22da9f3989",
+      measurementId: "G-TLC59XH1R5"
     };
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
@@ -54,21 +55,23 @@
 <!-- ここから認証フォーム -->
   <div id="auth-forms" style="display:none">
     <!-- サインアップ -->
-    <div id="signup-form">
-      <h3>新規登録</h3>
-      <input id="signup-email"    type="email"    placeholder="メールアドレス" />
-      <input id="signup-password" type="password" placeholder="パスワード（6文字以上）" />
-      <button id="btn-signup">登録</button>
+    <div id="signup-methods">
+      <!-- メール -->
+      <button id="btn-email-signup">メールで登録</button>
+      <!-- Google -->
+      <button id="btn-google-signin">Google で続行</button>
     </div>
 
     <!-- ログイン -->
-    <div id="login-form" style="margin-top:0.5rem;">
+    <div id="login-form" style="display:none">
       <h3>ログイン</h3>
       <input id="login-email"    type="email"    placeholder="メールアドレス" />
       <input id="login-password" type="password" placeholder="パスワード" />
       <button id="btn-login">ログイン</button>
     </div>
   </div>
+
+
 <!-- ここまで認証フォーム -->
 
 
@@ -464,12 +467,39 @@ function drawResults(places, status) {
     }
   });
 
-  // 4) 認証状態を監視して検索フォームの表示を切り替え
-  auth.onAuthStateChanged(user => {
-      document.getElementById('controls').style.display   = user ? 'flex' : 'none';
-      document.getElementById('auth-forms').style.display = user ? 'none' : 'block';      
-    });
+  // ─── Google プロバイダでのサインイン／サインアップ ───
+  document.getElementById('btn-google-signin').addEventListener('click', async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+      const result = await auth.signInWithPopup(provider);
+      // 初回のみユーザー情報作成、あるいは既存ユーザーにログイン
+      const user = result.user;
+      if (result.additionalUserInfo.isNewUser) {
+        alert(`ようこそ、${user.displayName}さん！アカウントを作成しました。`);
+      } else {
+        alert(`こんにちは、${user.displayName}さん！ログインしました。`);
+      }
+    } catch (e) {
+      alert('Google 認証エラー: ' + e.message);
+    }
+  });
 
+
+
+  // ─── 認証状態を監視して UI 切り替え ───
+  auth.onAuthStateChanged(user => {
+    const methods = document.getElementById('signup-methods');
+    const controls = document.getElementById('controls');
+    if (user) {
+      // ログイン済み
+      methods.style.display = 'none';
+      controls.style.display = 'flex';  // 検索フォームなどを表示
+    } else {
+      // 未ログイン
+      methods.style.display = 'block';
+      controls.style.display = 'none';
+    }
+  });
 </script>
 
 
