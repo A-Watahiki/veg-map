@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ベジタリアン対応レストラン検索</title>
-  <!-- CSP を緩和：Google Maps + Google Fonts を許可 -->
   <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   script-src 
@@ -21,12 +18,30 @@
     https://identitytoolkit.googleapis.com
     https://securetoken.googleapis.com
     https://accounts.google.com
-    https://www.googleapis.com;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.gstatic.com;
-  img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com https://maps.google.com;
-  font-src 'self' data: https://fonts.gstatic.com;
-  frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://apis.google.com;
+    https://www.googleapis.com
+    https://firestore.googleapis.com
+    wss://firestore.googleapis.com;
+  img-src 
+    'self' 
+    data: 
+    https://maps.googleapis.com 
+    https://maps.gstatic.com 
+    https://maps.google.com 
+    https://www.google.com;
+  style-src 
+    'self' 'unsafe-inline' 
+    https://fonts.googleapis.com 
+    https://maps.gstatic.com;
+  font-src 
+    'self' data: 
+    https://fonts.gstatic.com;
+  frame-src 
+    'self' 
+    https://accounts.google.com 
+    https://*.firebaseapp.com 
+    https://apis.google.com;
 ">
+
 
 
   <!-- Firebase SDK -->
