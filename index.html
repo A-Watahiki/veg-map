@@ -42,38 +42,12 @@
     https://apis.google.com;
 ">
 
-
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-
-  <script>
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY",
-      authDomain: "blissful-shore-458002-e9.firebaseapp.com",
-      projectId: "blissful-shore-458002-e9",
-      storageBucket: "blissful-shore-458002-e9.firebasestorage.app",
-      messagingSenderId: "570582104108",
-      appId: "1:570582104108:web:87c3efeadafc22da9f3989",
-      measurementId: "G-TLC59XH1R5"
-    };
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-  </script>
+  
+  <script type="module" src="./firebase-init.js"></script>
 
   <link rel="stylesheet" href="styles.css">
 </head>
-<script>
-  // Firebase SDK 読み込み＆initializeAppの後で
-  const auth = firebase.auth();
-  const db = firebase.firestore(undefined, {
-  databaseId: 'veg-map'  // ← ここを明示的に指定
-});
-</script>
+
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
