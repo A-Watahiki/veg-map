@@ -314,11 +314,25 @@ function drawResults(places, status) {
     const d = item.detail;
     const needsConfirm = !d.hasOwnProperty('servesVegetarianFood') || d.servesVegetarianFood === false;
 
+  
+    // アイコン定義
+    const defaultIcon = {
+      url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+      scaledSize: new google.maps.Size(32, 32)
+    };
+    const hoverIcon = {
+      url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+      scaledSize: new google.maps.Size(48, 48)
+    };
+
+
+
     // 店名・住所・距離を描画する前に
-    new google.maps.Marker({
+    const marker = new google.maps.Marker({
       position: d.geometry.location,
-      map: map
-    });
+      map,
+      icon: defaultIcon
+    }); 
 
     const mapsUrl = `https://www.google.com/maps/search/?` + 
     new URLSearchParams({
@@ -334,6 +348,20 @@ function drawResults(places, status) {
     li.addEventListener('click', () => {
       window.open(mapsUrl, '_blank');
     });
+
+    // マーカー上での hover → マーカー拡大 ＆ li にクラス付与
+    marker.addListener('mouseover', () => {
+      marker.setIcon(hoverIcon);
+      li.classList.add('hover');
+    });
+    marker.addListener('mouseout', () => {
+      marker.setIcon(defaultIcon);
+      li.classList.remove('hover');
+    });
+
+    // すでにある、li 上での hover → マーカー拡大処理
+    li.addEventListener('mouseover', () => marker.setIcon(hoverIcon));
+    li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
 
     // 2) 店名カラム
     const nameDiv = document.createElement('div');
