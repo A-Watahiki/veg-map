@@ -403,5 +403,16 @@ function drawResults(places, status) {
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const h2  = document.querySelector('h2');
+    const map = document.getElementById('map');
+    // h2 の高さ＋下マージンを計算
+    const style      = getComputedStyle(h2);
+    const h2Height   = h2.getBoundingClientRect().height;
+    const marginBot  = parseFloat(style.marginBottom);
+    map.style.top    = `${h2Height + marginBot}px`;
+  });
+</script>
 </body>
 </html>
