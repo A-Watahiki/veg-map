@@ -9,7 +9,9 @@
     default-src        'self';
     script-src         'self' 'unsafe-inline' 'unsafe-eval'
                        https://maps.googleapis.com
-                       https://maps.gstatic.com;
+                       https://maps.gstatic.com
+                       https://www.gstatic.com;
+
     style-src          'self' 'unsafe-inline'
                        https://fonts.googleapis.com
                        https://maps.gstatic.com;
@@ -20,15 +22,57 @@
     connect-src        'self'
                        https://maps.googleapis.com
                        https://maps.gstatic.com
-                       https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net;
+                       https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
+                       https://identitytoolkit.googleapis.com;
     font-src           'self' data:
                        https://fonts.gstatic.com;
   ">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSy…",                
+      authDomain: "veg-map.firebaseapp.com",
+      projectId: "veg-map",
+      storageBucket: "veg-map.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdef123456"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
-  <div id="controls">
+
+<!-- ここから認証フォーム -->
+  <div id="auth-forms" style="display:none">
+    <!-- サインアップ -->
+    <div id="signup-form">
+      <h3>新規登録</h3>
+      <input id="signup-email"    type="email"    placeholder="メールアドレス" />
+      <input id="signup-password" type="password" placeholder="パスワード（6文字以上）" />
+      <button id="btn-signup">登録</button>
+    </div>
+
+    <!-- ログイン -->
+    <div id="login-form" style="margin-top:0.5rem;">
+      <h3>ログイン</h3>
+      <input id="login-email"    type="email"    placeholder="メールアドレス" />
+      <input id="login-password" type="password" placeholder="パスワード" />
+      <button id="btn-login">ログイン</button>
+    </div>
+  </div>
+<!-- ここまで認証フォーム -->
+
+
+  <div id="controls" style="display: none;">
     <input id="location-input" type="text" placeholder="目的地を入力してください" />
     <button id="search-btn">検索</button>
   </div>
@@ -57,7 +101,7 @@
       );
       autocomplete.bindTo("bounds", map);
 
-      document.getElementById("search-btn").addEventListener("click", () => {
+      document.getElementById("search-btn").addEventListener("click", async () => {
         const place = autocomplete.getPlace();
         if (!place || !place.geometry) {
           alert("候補から場所を選択してください");
@@ -67,58 +111,48 @@
         originLocation = place.geometry.location;
         map.setCenter(place.geometry.location);
         map.setZoom(15);
-        multiKeywordSearch(place.geometry.location, ['vegetarian','vegan', 'ヴィーガン', 'ベジタリアン', '素食', 'マクロビ', 'マクロビオティック']);
+
+        // ここで async 関数を呼び出す
+        await multiKeywordSearch(originLocation, [
+          'vegetarian','vegan',
+          'ヴィーガン','ベジタリアン',
+          '素食','マクロビ','マクロビオティック']);
       });
     }
+// ① async 化
+async function multiKeywordSearch(location, keywords) {
+  // 1) ID トークンを取得
+  const idToken = await auth.currentUser.getIdToken();
 
-    function multiKeywordSearch(location, keywords) {
-
-    let overLimit = false;
-    const allPromises = keywords.map(kw => new Promise(resolve => {
-    service.nearbySearch({
-      location,
-      radius: 1500,
-      type: 'restaurant',
-      keyword: kw
-    }, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
-        overLimit = true;
-        resolve([]);  // 空配列返して処理だけ続ける
-      }
-      else if (status === google.maps.places.PlacesServiceStatus.OK) {
-        resolve(results);
-      }
-      else {
-        resolve([]);
-      }
-    });
-  }));
-
-
-   Promise.all(allPromises).then(resultsArray => {
-    console.log('multiKeyword results:', resultsArray);
-    if (overLimit) {
-      // ボタンを無効化して以降の検索をストップ
-      const btn = document.getElementById('search-btn');
-      btn.disabled = true;
-      alert('無料クォータを超過しました。新しい検索はできません。');
-      return;
+  // 2) Cloud Function（searchPlaces）を呼び出し
+  const res = await fetch(
+    'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/searchPlaces',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        location: { lat: location.lat(), lng: location.lng() },
+        keywords
+      })
     }
-    // 手動で flatten
-    const allPlaces = resultsArray.reduce((acc, arr) => acc.concat(arr), []);
-    // place_id で重複除去
-    const merged = [];
-    const seen   = new Set();
-    allPlaces.forEach(p => {
-      if (!seen.has(p.place_id)) {
-        seen.add(p.place_id);
-        merged.push(p);
-      }
-    });
-      // 結果を drawResults に渡す（ステータスOK扱い）
-      drawResults(merged, google.maps.places.PlacesServiceStatus.OK);
-    });
+  );
+
+  if (res.status === 401) {
+    alert('検索するにはログインが必要です');
+    return;
   }
+  if (!res.ok) {
+    console.error('検索エラー:', await res.text());
+    return;
+  }
+
+  // 3) レスポンスをパースして地図＆リストに描画
+  const { places } = await res.json();
+  drawResults(places, google.maps.places.PlacesServiceStatus.OK);
+}
 
   function sendHeightToParent() {
   const h = document.documentElement.scrollHeight;
@@ -401,6 +435,44 @@ function drawResults(places, status) {
 }
 
 </script>
+
+<script>
+  // 1) Firebase App／Auth の初期化が済んでいること
+  const auth = firebase.auth();
+
+  // 2) サインアップボタンのハンドラ登録
+  document.getElementById('btn-signup').addEventListener('click', async () => {
+    const email = document.getElementById('signup-email').value;
+    const pwd   = document.getElementById('signup-password').value;
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+      await cred.user.sendEmailVerification(); // メール確認を送りたい場合
+      alert('登録完了！確認メールを送信しました。');
+    } catch (e) {
+      alert('登録エラー: ' + e.message);
+    }
+  });
+
+  // 3) ログインボタンのハンドラも同様にここで登録
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value;
+    const pwd   = document.getElementById('login-password').value;
+    try {
+      await auth.signInWithEmailAndPassword(email, pwd);
+    } catch (e) {
+      alert('ログインエラー: ' + e.message);
+    }
+  });
+
+  // 4) 認証状態を監視して検索フォームの表示を切り替え
+  auth.onAuthStateChanged(user => {
+      document.getElementById('controls').style.display   = user ? 'flex' : 'none';
+      document.getElementById('auth-forms').style.display = user ? 'none' : 'block';      
+    });
+
+</script>
+
+
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
 </script>
 </body>
