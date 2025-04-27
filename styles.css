@@ -1,3 +1,20 @@
+/* ベースレイアウト */
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 1rem;
+}
+
+/* マップ */
+#map {
+  position: sticky;   /* スクロールしても上部に貼り付き */
+  top: 0;             /* ビューポートの上端に */
+  z-index: 1000;      /* 他要素の上に出す */
+  width: 100%;
+  height: 400px;
+  margin-bottom: 1rem;
+}
+
 /* リスト全体はグリッド解除して普通の縦リストに */
 #results {
   list-style: none;
@@ -15,7 +32,6 @@
   border-bottom: 1px solid #e0e0e0;
   cursor: pointer;
 }
-
 
 /* 2. カラムをそれぞれ全体幅の1/3に固定 */
 .result-item > div {
@@ -97,7 +113,6 @@
   border-color: #77B8D1;              /* Animotethics のライトブルー系 */  
   box-shadow: 0 0 0 3px rgba(119,184,209,0.3);  
 }
-
 
 /* 注記を小さく目立たせすぎずに表示 */
 .note {
