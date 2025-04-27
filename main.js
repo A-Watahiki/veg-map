@@ -23,6 +23,7 @@ let map, service, autocomplete, distanceService, originLocation;
 // Firestore 初期化完了イベントの待機処理
 window.addEventListener('firebaseReady', () => {
   console.log('Firebase準備完了、Firestore利用可能');
+});
   
 
 // ──────────────
