@@ -174,7 +174,7 @@ async function multiKeywordSearch(loc, keywords) {
   // Step4: 描画
   markers.forEach(m => m.setMap(null)); markers.length = 0;
   const ul = document.getElementById('results'); ul.innerHTML = '';
-  const defaultIcon = { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(32, 32) };
+  const defaultIcon = { url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(32, 32) };
   const hoverIcon   = { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(48, 48) };
 
   for (const item of details) {
