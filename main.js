@@ -77,58 +77,61 @@ onAuthStateChanged(auth, async user => {
 });
 
 
-// 4) DOM 完全構築後にボタンのハンドラを設定
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('➡️ DOMContentLoaded fired');
+// 4) DOM 完全構築後—or 読み込み済みなら即—にボタンのハンドラを設定
+function setupAuthEventHandlers() {
+  console.log('🔧 setupAuthEventHandlers');
 
   const btn = document.getElementById('btn-send-link');
   console.log('📦 signup button element:', btn);
   if (!btn) {
-    console.warn('❗️ btn-send-link が取得できませんでした');
-    return;
+    console.warn('❗️ btn-send-link が取得できません');
+  } else {
+    btn.addEventListener('click', async (e) => {
+      console.log('🖱️ btn-send-link clicked');
+      const userID = document.getElementById('signup-userid').value.trim();
+      const email  = document.getElementById('signup-email').value.trim();
+      const errEl  = document.getElementById('signup-error');
+      errEl.style.display = 'none';
+
+      if (!userID || !email) {
+        console.log('⚠️ 入力不足:', { userID, email });
+        errEl.textContent = '両方入力してください';
+        return errEl.style.display = 'block';
+      }
+      try {
+        await sendSignInLink(email, userID);
+        console.log('✅ sendSignInLink 成功');
+        alert('確認メールを送りました。リンクを開いて認証を完了してください。');
+      } catch (e) {
+        console.error('❌ sendSignInLink 失敗', e);
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
   }
-
-  btn.addEventListener('click', async (e) => {
-    console.log('🖱️ btn-send-link clicked', e);
-
-    // 追加で要注意！
-    // HTML では input の id が "signup-userid" (小文字) ですが、
-    // ここでは "signup-userID" (D が大文字) を参照していると要素が null になります。
-    // const userID = document.getElementById('signup-userID').value.trim();
-    //                            ↑ ここ、HTML に合わせて小文字にしてください
-    const userID = document.getElementById('signup-userid').value.trim();
-    const email  = document.getElementById('signup-email').value.trim();
-    const errEl  = document.getElementById('signup-error');
-    errEl.style.display = 'none';
-
-    if (!userID || !email) {
-      console.log('⚠️ 入力不足:', { userID, email });
-      errEl.textContent = '両方入力してください';
-      return errEl.style.display = 'block';
-    }
-    try {
-      await sendSignInLink(email, userID);
-      console.log('✅ sendSignInLink 成功');
-      alert('確認メールを送りました。リンクを開いて認証を完了してください。');
-    } catch (e) {
-      console.error('❌ sendSignInLink 失敗', e);
-      errEl.textContent = e.message;
-      errEl.style.display = 'block';
-    }
-  });
 
   const okBtn = document.getElementById('success-ok');
   console.log('📦 success-ok button element:', okBtn);
-  okBtn.addEventListener('click', async () => {
-    console.log('🖱️ success-ok clicked');
-    document.getElementById('auth-success').style.display = 'none';
-    try {
-      await loadGoogleMaps();
-    } catch (e) {
-      alert(e.message);
-    }
-  });
-});
+  if (okBtn) {
+    okBtn.addEventListener('click', async () => {
+      console.log('🖱️ success-ok clicked');
+      document.getElementById('auth-success').style.display = 'none';
+      try {
+        await loadGoogleMaps();
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+  }
+}
+
+// DOM の準備が済んでいれば即実行、まだなら待つ
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupAuthEventHandlers);
+} else {
+  setupAuthEventHandlers();
+}
+
 
 
 // 5) 検索ロジック
