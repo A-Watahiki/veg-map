@@ -142,9 +142,13 @@ async function onSearch() {
     alert('候補から選択してください');
     return;
   }
-  console.log('📍 selected location:', place.geometry.location);
-  map.setCenter(place.geometry.location);
-  await multiKeywordSearch(place.geometry.location, [
+  // LatLng オブジェクトから緯度・経度を取得
+  const latLng = place.geometry.location;
+  const lat = typeof latLng.lat === 'function' ? latLng.lat() : latLng.lat;
+  const lng = typeof latLng.lng === 'function' ? latLng.lng() : latLng.lng;
+  console.log('📍 selected location lat/lng:', lat, lng);
+  map.setCenter(latLng);
+  await multiKeywordSearch({ lat, lng }, [
     'vegetarian','vegan','ヴィーガン','ベジタリアン','素食','マクロビ','マクロビオティック'
   ]);
 }
