@@ -30,9 +30,13 @@ await setPersistence(auth, browserLocalPersistence);
 // Firestore (veg-map データベース指定)
 export const db = initializeFirestore(app, {}, 'veg-map');
 
-// メールリンク用設定 (自身の origin にリダイレクト)
+// メールリンク用設定
+const base = window.location.origin;
+const repoPath = window.location.pathname.replace(/\/index\.html$/, '');  
+// GH Pages なら "/veg-map" または "/veg-map/" になるはず
+
 const actionCodeSettings = {
-  url: window.location.origin,
+  url: `${base}${repoPath}`,       // → https://a-watahiki.github.io/veg-map に誘導
   handleCodeInApp: true
 };
 
