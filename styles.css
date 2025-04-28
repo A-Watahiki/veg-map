@@ -22,30 +22,42 @@ body {
   padding: 0;
 }
 
-/* 各アイテムを細長い行（フレックス）に */
 .result-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  margin: 0 10pt;
-  border-bottom: 1px solid #e0e0e0;
-  cursor: pointer;
+    display: grid;
+    /* カラム幅はお好みで調整してください */
+    grid-template-columns: 2fr 3fr 2fr;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    margin: 0 10pt;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+    gap: 0.5rem; /* カラム間の余白 */
+  }
+
+/* 店名 */
+.result-item .item-name {
+  font-weight: 500;
+  color: #2a4f9c;
+  /* 長い店名の折り返しを有効化 */
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
-
-/* 2. カラムをそれぞれ全体幅の1/3に固定 */
-.result-item > div {
-  flex: 0 0 33.3333%;     /* 幅を33.3333%に固定 */
-  padding: 0 10pt;        /* 左右10ptの余白 */
-  box-sizing: border-box; /* パディング込みで幅を計算 */
-
-  /* 折り返し設定 */
-  white-space: normal;           /* 通常の折り返しを有効に */
-  overflow-wrap: break-word;     /* 単語単位で折り返し */
-  word-break: break-all;         /* 長い単語も折り返す */
+/* 住所 */
+.result-item .item-vicinity {
+  font-size: 0.875rem;
+  color: #444;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
+/* 距離＆時間 */
+.result-item .item-distance {
+  font-size: 0.875rem;
+  color: #666;
+  text-align: right;
+  white-space: nowrap;
+}
 
 /* 店名リンクは左側に伸ばす */
 .result-item a {
@@ -66,8 +78,9 @@ body {
 
 .result-item:hover,
 .result-item.hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+  background-color: #f0f8ff;    /* 背景色で強調 */
+  transform: translateY(-2px);  /* 少しだけ浮かせる */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 
 /* 1) 検索バー全体をセンタリング */

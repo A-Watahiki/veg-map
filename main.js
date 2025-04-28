@@ -142,7 +142,6 @@ async function onSearch() {
     alert('候補から選択してください');
     return;
   }
-  // LatLng オブジェクトから緯度・経度を取得
   const latLng = place.geometry.location;
   const lat = typeof latLng.lat === 'function' ? latLng.lat() : latLng.lat;
   const lng = typeof latLng.lng === 'function' ? latLng.lng() : latLng.lng;
@@ -156,6 +155,16 @@ async function onSearch() {
 // 6) 結果取得と描画
 async function multiKeywordSearch(loc, keywords) {
   console.log('🔍 multiKeywordSearch', loc, keywords);
+  // アイコン定義
+  const defaultIcon = {
+    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    scaledSize: new google.maps.Size(32, 32)
+  };
+  const hoverIcon = {
+    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    scaledSize: new google.maps.Size(48, 48)
+  };
+
   try {
     const places = await searchPlacesFn(loc, keywords);
     console.log('🔎 places result:', places);
@@ -168,20 +177,65 @@ async function multiKeywordSearch(loc, keywords) {
     ul.innerHTML = '';
 
     for (const p of places) {
-      const li = document.createElement('li');
+      // フラグ取得
       const flag = (await getVegetarianFlagFn(p.place_id)).serves_vegetarian_food;
-      li.textContent = p.name + (flag ? '' : ' ❗️');
+
+      // リストアイテム作成
+      const li = document.createElement('li');
+      li.classList.add('result-item');
+
+      // 店名カラム
+      const nameDiv = document.createElement('div');
+      nameDiv.classList.add('item-name');
+      if (!flag) {
+        const emoji = document.createElement('span');
+        emoji.textContent = '❗️ ';
+        nameDiv.appendChild(emoji);
+      }
+      nameDiv.appendChild(document.createTextNode(p.name));
+
+      // 住所カラム
+      const vicinityDiv = document.createElement('div');
+      vicinityDiv.classList.add('item-vicinity');
+      vicinityDiv.textContent = p.vicinity || '';
+
+      // 空の距離カラム（後で拡張用）
+      const distanceDiv = document.createElement('div');
+      distanceDiv.classList.add('item-distance');
+      distanceDiv.textContent = '';
+
+      li.append(nameDiv, vicinityDiv, distanceDiv);
       ul.appendChild(li);
 
-      // マーカー立てる
+      // マーカー作成
+      let marker;
       if (p.geometry && p.geometry.location) {
-        const marker = new google.maps.Marker({
+        marker = new google.maps.Marker({
           position: p.geometry.location,
           map,
-          title: p.name
+          title: p.name,
+          icon: defaultIcon
         });
         markers.push(marker);
       }
+
+      // ホバー連携
+      if (marker) {
+        marker.addListener('mouseover', () => {
+          marker.setIcon(hoverIcon);
+          li.classList.add('hover');
+        });
+        marker.addListener('mouseout', () => {
+          marker.setIcon(defaultIcon);
+          li.classList.remove('hover');
+        });
+      }
+      li.addEventListener('mouseover', () => {
+        if (marker) marker.setIcon(hoverIcon);
+      });
+      li.addEventListener('mouseout', () => {
+        if (marker) marker.setIcon(defaultIcon);
+      });
     }
   } catch (e) {
     console.error('検索エラー:', e);
