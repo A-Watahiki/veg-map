@@ -54,7 +54,7 @@ export async function verifyUsername(username) {
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(
-    'https://searchplaces-ictqzxcg5a-an.a.run.app',
+    'https://verifyusername-ictqzxcg5a-an.a.run.app/verifyUsername',
     {
       method: 'POST',
       headers: {
