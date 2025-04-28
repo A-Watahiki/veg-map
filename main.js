@@ -6,7 +6,8 @@ import {
   handleEmailLinkSignIn,
   sendSignInLink,
   searchPlacesFn,
-  getVegetarianFlagFn
+  getVegetarianFlagFn,
+  getVeganFlagFn
 } from './firebase-init.js';
 import {
   onAuthStateChanged
@@ -38,18 +39,12 @@ window.initMap = initMap;
 // 2) Maps API を動的にロード
 function loadGoogleMaps() {
   return new Promise((resolve, reject) => {
-    if (mapsLoaded) {
-      resolve(); return;
-    }
+    if (mapsLoaded) { resolve(); return; }
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places,geometry`;
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      mapsLoaded = true;
-      initMap();
-      resolve();
-    };
+    script.onload = () => { mapsLoaded = true; initMap(); resolve(); };
     script.onerror = () => reject(new Error('Google Maps API の読み込みに失敗しました'));
     document.head.appendChild(script);
   });
@@ -69,11 +64,7 @@ onAuthStateChanged(auth, async user => {
   document.getElementById('auth-forms').style.display = isReady ? 'none' : 'block';
   document.getElementById('controls').style.display   = isReady ? 'flex' : 'none';
   if (isReady) {
-    try {
-      await loadGoogleMaps();
-    } catch (e) {
-      alert(e.message);
-    }
+    try { await loadGoogleMaps(); } catch (e) { alert(e.message); }
   }
 });
 
@@ -85,8 +76,7 @@ function setupAuthEventHandlers() {
     btn.addEventListener('click', async () => {
       const userID = document.getElementById('signup-userid').value.trim();
       const email  = document.getElementById('signup-email').value.trim();
-      const errEl  = document.getElementById('signup-error');
-      errEl.style.display = 'none';
+      const errEl  = document.getElementById('signup-error'); errEl.style.display = 'none';
       if (!userID || !email) {
         errEl.textContent = '両方入力してください';
         return errEl.style.display = 'block';
@@ -104,45 +94,37 @@ function setupAuthEventHandlers() {
   if (okBtn) {
     okBtn.addEventListener('click', async () => {
       document.getElementById('auth-success').style.display = 'none';
-      try {
-        await loadGoogleMaps();
-      } catch(e) { alert(e.message); }
+      try { await loadGoogleMaps(); } catch(e) { alert(e.message); }
     });
   }
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupAuthEventHandlers);
-} else {
-  setupAuthEventHandlers();
-}
+} else { setupAuthEventHandlers(); }
 
 // 5) 検索処理
 async function onSearch() {
   console.log('🖱️ onSearch');
   const place = autocomplete.getPlace();
   if (!place || !place.geometry) {
-    alert('候補から選択してください');
-    return;
+    alert('候補から選択してください'); return;
   }
-  const lat = place.geometry.location.lat();
-  const lng = place.geometry.location.lng();
   map.setCenter(place.geometry.location);
-  await multiKeywordSearch({ lat, lng }, [
+  await multiKeywordSearch({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng() }, [
     'vegetarian','vegan','ヴィーガン','ベジタリアン','素食','マクロビ','マクロビオティック'
   ]);
 }
 
-// 6) 詳細取得＋距離フィルタ＋ソート＋描画
+// 6) 詳細取得＋距離フィルタ＋ソート＋ベジ・ヴィーガンアイコン＋描画
 async function multiKeywordSearch(loc, keywords) {
   console.log('🔍 multiKeywordSearch', loc, keywords);
   const service = new google.maps.places.PlacesService(map);
   const distanceService = new google.maps.DistanceMatrixService();
   try {
-    // サーバーから生の Nearby Search 結果を取得
     const rawPlaces = await searchPlacesFn(loc, keywords);
     console.log('🔎 rawPlaces:', rawPlaces.length);
 
-    // Details を並列取得
+    // Details 取得
     const detailPromises = rawPlaces.map(p => new Promise(resolve => {
       service.getDetails({ placeId: p.place_id, fields: ['name','vicinity','geometry','place_id'] },
         (detail, status) => resolve(status===google.maps.places.PlacesServiceStatus.OK ? detail : null)
@@ -151,47 +133,48 @@ async function multiKeywordSearch(loc, keywords) {
     let details = (await Promise.all(detailPromises)).filter(d => d);
     console.log('ℹ️ details fetched:', details.length);
 
-    // Distance Matrix 取得
-    const origins = [ new google.maps.LatLng(loc.lat, loc.lng) ];
+    // Distance Matrix & フィルタ・ソート
+    const origins = [new google.maps.LatLng(loc.lat, loc.lng)];
     const destinations = details.map(d => d.geometry.location);
     const dm = await new Promise(resolve => {
-      distanceService.getDistanceMatrix({ origins, destinations, travelMode: 'WALKING', unitSystem: google.maps.UnitSystem.METRIC },
+      distanceService.getDistanceMatrix({ origins, destinations, travelMode:'WALKING', unitSystem: google.maps.UnitSystem.METRIC },
         (res, status) => resolve({ res, status }));
     });
     if (dm.status === google.maps.DistanceMatrixStatus.OK) {
-      details = details.map((d, i) => {
+      details = details.map((d,i) => {
         const el = dm.res.rows[0].elements[i];
-        return {
-          detail: d,
-          distanceValue: el.distance.value,
-          distanceText: el.distance.text,
-          durationValue: el.duration.value,
-          durationText: el.duration.text
-        };
+        return { detail: d, distanceValue: el.distance.value, distanceText: el.distance.text, durationValue: el.duration.value, durationText: el.duration.text };
       }).filter(item => item.distanceValue <= 1500)
         .sort((a,b) => a.durationValue - b.durationValue);
     }
     console.log('✅ filtered & sorted:', details.length);
 
-    // 既存マーカークリア & リスト初期化
+    // 描画準備
     markers.forEach(m => m.setMap(null)); markers.length = 0;
     const ul = document.getElementById('results'); ul.innerHTML = '';
-
-    // 描画
     const defaultIcon = { url:'http://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(32,32) };
     const hoverIcon   = { url:'http://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(48,48) };
-    details.forEach(item => {
+
+    for (const item of details) {
       const d = item.detail;
+      // フラグ取得
+      const vegFlag   = (await getVegetarianFlagFn(d.place_id)).serves_vegetarian_food;
+      const veganFlag = (await getVeganFlagFn(d.place_id)).serves_vegan_food;
+      // 飾り絵文字決定
+      let prefix = '';
+      if (veganFlag) prefix = '❤️ ';
+      else if (vegFlag) prefix = '💚 ';
+
+      // リスト描画
       const li = document.createElement('li'); li.classList.add('result-item');
-      // 店名
-      const nameDiv = document.createElement('div'); nameDiv.classList.add('item-name'); nameDiv.textContent = d.name;
-      // 住所
+      const nameDiv = document.createElement('div'); nameDiv.classList.add('item-name');
+      nameDiv.textContent = prefix + d.name;
       const vicinityDiv = document.createElement('div'); vicinityDiv.classList.add('item-vicinity'); vicinityDiv.textContent = d.vicinity;
-      // 距離・時間
-      const distanceDiv = document.createElement('div'); distanceDiv.classList.add('item-distance'); distanceDiv.textContent = `${item.distanceText} (${item.durationText})`;
+      const distanceDiv  = document.createElement('div'); distanceDiv.classList.add('item-distance'); distanceDiv.textContent = `${item.distanceText} (${item.durationText})`;
       li.append(nameDiv, vicinityDiv, distanceDiv);
       ul.appendChild(li);
-      // マーカー
+
+      // マーカー描画
       const marker = new google.maps.Marker({ position: d.geometry.location, map, title: d.name, icon: defaultIcon });
       markers.push(marker);
       // ホバー連携
@@ -199,7 +182,7 @@ async function multiKeywordSearch(loc, keywords) {
       marker.addListener('mouseout',  ()=>{ marker.setIcon(defaultIcon); li.classList.remove('hover'); });
       li.addEventListener('mouseover', ()=> marker.setIcon(hoverIcon));
       li.addEventListener('mouseout',  ()=> marker.setIcon(defaultIcon));
-    });
+    }
   } catch (e) {
     console.error('検索エラー:', e);
     alert('検索エラー: ' + e.message);
