@@ -3,7 +3,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { 
   initializeFirestore,
-  persistentLocalCache
+  enableIndexedDbPersistence
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -24,11 +24,16 @@ export const auth = getAuth(app);
 
 // Firestore 初期化（既存データベース veg-map 指定）
 export const db = initializeFirestore(app, {
-  databaseId: 'veg-map',              // データベースIDを明示的に指定
-  localCache: persistentLocalCache(), // Tab間キャッシュ共有
-  experimentalForceLongPolling: true, // WebChannel失敗時は常にロングポーリング
-  useFetchStreams: false              // fetchStreamsを使わずXHR
+  databaseId: 'veg-map',             // データベースIDを明示的に指定
+  experimentalForceLongPolling: true,// WebChannel失敗時は常にロングポーリング
+  useFetchStreams: false             // fetchStreamsを使わずXHR
 });
+
+// IndexedDB Persistence 有効化（マルチDB対応）
+enableIndexedDbPersistence(db)
+  .catch(err => {
+    console.warn('Persistence failed:', err.code);
+  });
 
 // Firebase初期化完了を通知するイベントを発火
 window.dispatchEvent(new Event('firebaseReady'));
