@@ -8,16 +8,16 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-import { initializeFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY",
-  authDomain: "blissful-shore-458002-e9.firebaseapp.com",
-  projectId: "blissful-shore-458002-e9",
-  storageBucket: "blissful-shore-458002-e9.appspot.com",
-  messagingSenderId: "570582104108",
-  appId: "1:570582104108:web:87c3efeadafc22da9f3989",
-  measurementId: "G-TLC59XH1R5"
+  apiKey: 'AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY',
+  authDomain: 'blissful-shore-458002-e9.firebaseapp.com',
+  projectId: 'blissful-shore-458002-e9',
+  storageBucket: 'blissful-shore-458002-e9.appspot.com',
+  messagingSenderId: '570582104108',
+  appId: '1:570582104108:web:87c3efeadafc22da9f3989',
+  measurementId: 'G-TLC59XH1R5'
 };
 
 // Firebase アプリ初期化
@@ -27,8 +27,8 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 await setPersistence(auth, browserLocalPersistence);
 
-// Firestore (veg-map データベース指定)
-export const db = initializeFirestore(app, {}, 'veg-map');
+// Firestore (デフォルトデータベース)
+export const db = getFirestore(app);
 
 // メールリンク用設定
 const base = window.location.origin;
@@ -38,16 +38,13 @@ const actionCodeSettings = {
   handleCodeInApp: true
 };
 
-// Cloud Run（Gen2）エンドポイントのベース URL
+// エンドポイント定義
 const VERIFY_URL        = 'https://verifyusername-ictqzxcg5a-an.a.run.app/';
 const SEARCHPLACES_URL  = 'https://searchplaces-ictqzxcg5a-an.a.run.app/';
 const FLAG_URL_BASE     = 'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag';
 const VEGAN_FLAG_URL_BASE = 'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVeganFlag';
 
-// ——————————————————————————————
-// 1) ユーザーID＋メールリンク 認証ワークフロー
-// ——————————————————————————————
-
+// 1) メールリンク送信
 export async function sendSignInLink(email, userId) {
   const { ok } = await verifyUsernameUnauthenticated(userId);
   if (!ok) throw new Error('ユーザーIDが名簿と一致しません。');
@@ -55,6 +52,7 @@ export async function sendSignInLink(email, userId) {
   return sendSignInLinkToEmail(auth, email, actionCodeSettings);
 }
 
+// 2) メールリンクサインイン
 export async function handleEmailLinkSignIn() {
   const link = window.location.href;
   if (isSignInWithEmailLink(auth, link)) {
@@ -67,10 +65,7 @@ export async function handleEmailLinkSignIn() {
   return null;
 }
 
-// ——————————————————————————————
-// 2) ユーザーID照合：認証前版（トークン不要）
-// ——————————————————————————————
-
+// 3) ユーザー照合（認証前）
 export async function verifyUsernameUnauthenticated(username) {
   const res = await fetch(VERIFY_URL, {
     method: 'POST',
@@ -81,10 +76,7 @@ export async function verifyUsernameUnauthenticated(username) {
   return res.json();
 }
 
-// ——————————————————————————————
-// 3) 場所検索／フラグ取得
-// ——————————————————————————————
-
+// 4) 場所検索
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(SEARCHPLACES_URL, {
@@ -99,19 +91,39 @@ export async function searchPlacesFn(location, keywords) {
   return (await res.json()).places;
 }
 
+// 5) ベジタリアンフラグ取得
 export async function getVegetarianFlagFn(placeId) {
-  const res = await fetch(`${FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`);
-  if (!res.ok) throw new Error(`getVegetarianFlag failed: ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`);
+    if (!res.ok) {
+      console.error('getVegetarianFlag failed status:', res.status);
+      return { serves_vegetarian_food: false };
+    }
+    const data = await res.json();
+    return { serves_vegetarian_food: data.serves_vegetarian_food ?? false };
+  } catch (e) {
+    console.error('getVegetarianFlag error:', e);
+    return { serves_vegetarian_food: false };
+  }
 }
 
+// 6) ヴィーガンフラグ取得
 export async function getVeganFlagFn(placeId) {
-  const res = await fetch(`${VEGAN_FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`);
-  if (!res.ok) throw new Error(`getVeganFlag failed: ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${VEGAN_FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`);
+    if (!res.ok) {
+      console.error('getVeganFlag failed status:', res.status);
+      return { serves_vegan_food: false };
+    }
+    const data = await res.json();
+    return { serves_vegan_food: data.serves_vegan_food ?? false };
+  } catch (e) {
+    console.error('getVeganFlag error:', e);
+    return { serves_vegan_food: false };
+  }
 }
 
-// Firebase 初期化完了を通知
+// 初期化完了通知
 window.dispatchEvent(new Event('firebaseReady'));
 
 // デバッグ用公開
