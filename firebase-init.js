@@ -32,47 +32,34 @@ export const db = initializeFirestore(app, {}, 'veg-map');
 
 // メールリンク用設定
 const base = window.location.origin;
-const repoPath = window.location.pathname.replace(/\/index\.html$/, '');  
-// GH Pages なら "/veg-map" または "/veg-map/" になるはず
-
+const repoPath = window.location.pathname.replace(/\/index\.html$/, '');
 const actionCodeSettings = {
-  url: `${base}${repoPath}`,       // → https://a-watahiki.github.io/veg-map に誘導
+  url: `${base}${repoPath}`,
   handleCodeInApp: true
 };
 
 // Cloud Run（Gen2）エンドポイントのベース URL
-const VERIFY_URL       = 'https://verifyusername-ictqzxcg5a-an.a.run.app/';
-const SEARCHPLACES_URL = 'https://searchplaces-ictqzxcg5a-an.a.run.app/';
-const FLAG_URL_BASE    = 'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag';
+const VERIFY_URL        = 'https://verifyusername-ictqzxcg5a-an.a.run.app/';
+const SEARCHPLACES_URL  = 'https://searchplaces-ictqzxcg5a-an.a.run.app/';
+const FLAG_URL_BASE     = 'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag';
+const VEGAN_FLAG_URL_BASE = 'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVeganFlag';
 
 // ——————————————————————————————
 // 1) ユーザーID＋メールリンク 認証ワークフロー
 // ——————————————————————————————
 
-/**
- * 1) allowedUsers 照合 → 2) 照合OKならメールリンク送信
- * @param {string} email 
- * @param {string} userId 
- */
 export async function sendSignInLink(email, userId) {
-  // 1) Firestore で ID 照合（認証前）
   const { ok } = await verifyUsernameUnauthenticated(userId);
   if (!ok) throw new Error('ユーザーIDが名簿と一致しません。');
-  // 2) メールリンク送信
   window.localStorage.setItem('emailForSignIn', email);
   return sendSignInLinkToEmail(auth, email, actionCodeSettings);
 }
 
-/**
- * ページ読み込み時に呼び出して、リンク認証を完了
- */
 export async function handleEmailLinkSignIn() {
   const link = window.location.href;
   if (isSignInWithEmailLink(auth, link)) {
     let email = window.localStorage.getItem('emailForSignIn');
-    if (!email) {
-      email = window.prompt('メールアドレスを入力してください');
-    }
+    if (!email) email = window.prompt('メールアドレスを入力してください');
     const result = await signInWithEmailLink(auth, email, link);
     window.localStorage.removeItem('emailForSignIn');
     return result.user;
@@ -84,10 +71,6 @@ export async function handleEmailLinkSignIn() {
 // 2) ユーザーID照合：認証前版（トークン不要）
 // ——————————————————————————————
 
-/**
- * auth.currentUser が null でも使えるよう、認証チェックをしない
- * @param {string} username 
- */
 export async function verifyUsernameUnauthenticated(username) {
   const res = await fetch(VERIFY_URL, {
     method: 'POST',
@@ -102,9 +85,6 @@ export async function verifyUsernameUnauthenticated(username) {
 // 3) 場所検索／フラグ取得
 // ——————————————————————————————
 
-/**
- * Cloud Run searchPlaces (認証後に呼ぶ)
- */
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(SEARCHPLACES_URL, {
@@ -119,14 +99,15 @@ export async function searchPlacesFn(location, keywords) {
   return (await res.json()).places;
 }
 
-/**
- * Cloud Functions getVegetarianFlag (認証不要)
- */
 export async function getVegetarianFlagFn(placeId) {
-  const res = await fetch(
-    `${FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`
-  );
+  const res = await fetch(`${FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`);
   if (!res.ok) throw new Error(`getVegetarianFlag failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getVeganFlagFn(placeId) {
+  const res = await fetch(`${VEGAN_FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`);
+  if (!res.ok) throw new Error(`getVeganFlag failed: ${res.status}`);
   return res.json();
 }
 
