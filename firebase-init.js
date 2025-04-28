@@ -16,71 +16,67 @@ const firebaseConfig = {
 // Firebase アプリ初期化
 const app = initializeApp(firebaseConfig);
 
-// Auth & Firestore
+// Auth & Firestore (veg-map データベース指定)
 export const auth = getAuth(app);
 export const db   = initializeFirestore(app, {}, 'veg-map');
 
 // ----------
-// Cloud Functions (v1/v2) HTTPS トリガー エンドポイント
+// Cloud Run (v2) / Cloud Functions (v1) HTTP トリガー呼び出しラッパー
 // ----------
 
 /**
- * ユーザー名照合
+ * ユーザー名照合 (Gen2 Cloud Run functions)
  * @param {string} username
  * @returns {Promise<{ok: boolean}>}
  */
 export async function verifyUsername(username) {
   const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch(
-    'https://asia-northeast1-blissful-shore-458002.cloudfunctions.net/verifyUsername',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ username })
-    }
-  );
+  const res = await fetch('https://verifyusername-ictqzxcg5a-an.a.run.app', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    },
+    body: JSON.stringify({ username })
+  });
   if (!res.ok) throw new Error(`verifyUsername failed: ${res.status}`);
   return res.json();
 }
 
 /**
- * Nearby Search (searchPlaces)
+ * Nearby Search (Gen2 Cloud Run functions)
  * @param {{lat:number,lng:number}} location
  * @param {string[]} keywords
+ * @returns {Promise<any[]>}
  */
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch(
-    'https://asia-northeast1-blissful-shore-458002.cloudfunctions.net/searchPlaces',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ location, keywords })
-    }
-  );
+  const res = await fetch('https://searchplaces-ictqzxcg5a-an.a.run.app', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    },
+    body: JSON.stringify({ location, keywords })
+  });
   if (!res.ok) throw new Error(`searchPlaces failed: ${res.status}`);
   return (await res.json()).places;
 }
 
 /**
- * Vegetarian Flag 取得
+ * Vegetarian Flag 取得 (Gen1 Cloud Functions)
  * @param {string} placeId
+ * @returns {Promise<{serves_vegetarian_food: boolean}>}
  */
 export async function getVegetarianFlagFn(placeId) {
   const res = await fetch(
-    `https://asia-northeast1-blissful-shore-458002.cloudfunctions.net/getVegetarianFlag?place_id=${encodeURIComponent(placeId)}`
+    `https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag?place_id=${encodeURIComponent(placeId)}`
   );
   if (!res.ok) throw new Error(`getVegetarianFlag failed: ${res.status}`);
   return res.json();
 }
 
-// Firebase初期化完了を通知
+// Firebase 初期化完了を通知
 window.dispatchEvent(new Event('firebaseReady'));
 
 // デバッグ用公開
