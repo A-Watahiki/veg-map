@@ -16,44 +16,40 @@ let map, service, autocomplete, distanceService, originLocation;
 // Firestore 初期化完了イベントの待機処理
 window.addEventListener('firebaseReady', () => {
   console.log('Firebase準備完了、Firestore利用可能');
-  // Google Maps のコールバックとして使用
+  // Google Maps API callback 用に initMap をグローバル登録
   window.initMap = initMap;
 });
-  registerInitMap(initMap);
-});
-  
 
 // ──────────────
 // 1) Google Maps 初期化
 // ──────────────
 function initMap() {
-  map = new google.maps.Map(document.getElementById("map"), {
+  map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
   service = new google.maps.places.PlacesService(map);
   distanceService = new google.maps.DistanceMatrixService();
   autocomplete = new google.maps.places.Autocomplete(
-    document.getElementById("location-input")
+    document.getElementById('location-input')
   );
-  autocomplete.bindTo("bounds", map);
+  autocomplete.bindTo('bounds', map);
 
-  document.getElementById("search-btn")
-    .addEventListener("click", async () => {
-      const place = autocomplete.getPlace();
-      if (!place?.geometry) {
-        alert("候補から場所を選択してください");
-        return;
-      }
-      originLocation = place.geometry.location;
-      map.setCenter(originLocation);
-      map.setZoom(15);
-      await multiKeywordSearch(originLocation, [
-        'vegetarian','vegan',
-        'ヴィーガン','ベジタリアン',
-        '素食','マクロビ','マクロビオティック'
-      ]);
-    });
+  document.getElementById('search-btn').addEventListener('click', async () => {
+    const place = autocomplete.getPlace();
+    if (!place?.geometry) {
+      alert('候補から場所を選択してください');
+      return;
+    }
+    originLocation = place.geometry.location;
+    map.setCenter(originLocation);
+    map.setZoom(15);
+    await multiKeywordSearch(originLocation, [
+      'vegetarian','vegan',
+      'ヴィーガン','ベジタリアン',
+      '素食','マクロビ','マクロビオティック'
+    ]);
+  });
 }
 
 // ──────────────
@@ -61,8 +57,7 @@ function initMap() {
 // ──────────────
 async function multiKeywordSearch(location, keywords) {
   try {
-    // Functions 経由で検索
-    const places = await searchPlacesFn({ lat: location.lat(), lng: location.lng() }, keywords);
+    const places = await searchPlacesFn(location, keywords);
     drawResults(places);
   } catch (e) {
     console.error('検索エラー:', e);
