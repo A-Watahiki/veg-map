@@ -12,8 +12,10 @@ import {
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
 let map, autocomplete;
+const API_KEY = 'AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA';
+let mapsLoaded = false;
 
-// 1) initMap をグローバルに公開
+// 1) initMap をグローバルに登録
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
@@ -28,9 +30,28 @@ function initMap() {
 }
 window.initMap = initMap;
 
-// 2) 認証状態／メールリンク処理
+// 2) Maps API を動的にロード
+function loadGoogleMaps() {
+  return new Promise((resolve, reject) => {
+    if (mapsLoaded) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places,geometry&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      mapsLoaded = true;
+      resolve();
+    };
+    script.onerror = () => reject(new Error('Google Maps API の読み込みに失敗しました'));
+    document.head.appendChild(script);
+  });
+}
+
+// 3) 認証状態／メールリンク処理
 onAuthStateChanged(auth, async user => {
-  // メールリンクサインインのハンドリング
   if (!user) {
     const signedInUser = await handleEmailLinkSignIn();
     if (signedInUser) {
@@ -43,11 +64,18 @@ onAuthStateChanged(auth, async user => {
   const isReady = user && user.emailVerified;
   document.getElementById('auth-forms').style.display   = isReady ? 'none' : 'block';
   document.getElementById('controls').style.display     = isReady ? 'flex' : 'none';
+
+  if (isReady) {
+    try {
+      await loadGoogleMaps();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
 });
 
-// 3) DOM 完全構築後にボタンのハンドラを設定
+// 4) DOM 完全構築後にボタンのハンドラを設定
 document.addEventListener('DOMContentLoaded', () => {
-  // サインアップ＋リンク送信
   document.getElementById('btn-send-link')
     .addEventListener('click', async () => {
       const userId = document.getElementById('signup-userid').value.trim();
@@ -68,16 +96,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-  // 成功ポップアップの OK ボタン
   document.getElementById('success-ok')
-    .addEventListener('click', () => {
+    .addEventListener('click', async () => {
       document.getElementById('auth-success').style.display = 'none';
-      // 認証済みユーザー用に地図を初期化
-      initMap();
+      // 認証済みユーザー用に地図をロード
+      try {
+        await loadGoogleMaps();
+      } catch (e) {
+        alert(e.message);
+      }
     });
 });
 
-// 4) 検索ロジック
+// 5) 検索ロジック
 async function onSearch() {
   const place = autocomplete.getPlace();
   if (!place || !place.geometry) {
