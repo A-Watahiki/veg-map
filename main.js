@@ -1,71 +1,19 @@
 // main.js
-import { auth, sendSignInLink, handleEmailLinkSignIn, searchPlacesFn, getVegetarianFlagFn } from './firebase-init.js';
 import {
-  onAuthStateChanged
+  auth,
+  handleEmailLinkSignIn,
+  sendSignInLink,
+  searchPlacesFn,
+  getVegetarianFlagFn
+} from './firebase-init.js';
+import {
+  onAuthStateChanged,
+  signInWithEmailLink
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
 let map, autocomplete;
 
-// ──────────────
-// ページロード時にメールリンク認証を処理
-// ──────────────
-handleEmailLinkSignIn()
-  .then(user => {
-    if (user) {
-      alert('認証に成功しました！');
-      // 認証後に地図を表示
-      window.initMap = initMap;
-      document.getElementById('controls').style.display = 'flex';
-      document.getElementById('signup-form').style.display = 'none';
-    }
-  })
-  .catch(console.error);
-
-// ──────────────
-// 認証状態変化ハンドラ
-// ──────────────
-onAuthStateChanged(auth, user => {
-  const verified = user && user.emailVerified;
-
-  // UI切り替え
-  document.getElementById('signup-form').style.display = verified ? 'none' : 'block';
-  document.getElementById('controls').style.display   = verified ? 'flex' : 'none';
-  if (verified) {
-    window.initMap = initMap;
-  }
-});
-
-// ──────────────
-// フォーム設定
-// ──────────────
-document.addEventListener('DOMContentLoaded', () => {
-  // メールリンク送信＋ID照合
-  document.getElementById('btn-email-signup').addEventListener('click', async () => {
-    const email  = document.getElementById('signup-email').value.trim();
-    const userId = document.getElementById('signup-userid').value.trim();
-    const errEl  = document.getElementById('signup-error');
-    errEl.style.display = 'none';
-
-    if (!email || !userId) {
-      errEl.textContent = 'メールアドレスとユーザーIDを入力してください。';
-      return errEl.style.display = 'block';
-    }
-    try {
-      // メールアドレスを保存
-      window.localStorage.setItem('emailForSignIn', email);
-      // ユーザーID照合とリンク送信
-      await sendSignInLink(email, userId);
-      alert('確認メールを送信しました。リンクをクリックしてアクセスしてください。');
-    } catch (e) {
-      errEl.textContent = 'エラー: ' + e.message;
-      errEl.style.display = 'block';
-    }
-  });
-});
-
-// ──────────────
-// Google Maps 初期化
-// ──────────────
+// 1) initMap をグローバルに公開
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
@@ -75,9 +23,61 @@ function initMap() {
     document.getElementById('location-input')
   );
   autocomplete.bindTo('bounds', map);
-  document.getElementById('search-btn').addEventListener('click', onSearch);
+  document.getElementById('search-btn')
+    .addEventListener('click', onSearch);
 }
+window.initMap = initMap;
 
+// 2) 認証状態／メールリンク処理
+onAuthStateChanged(auth, async user => {
+  // メールリンクサインインのハンドリング
+  if (!user) {
+    const signedInUser = await handleEmailLinkSignIn();
+    if (signedInUser) {
+      document.getElementById('auth-forms').style.display = 'none';
+      document.getElementById('auth-success').style.display = 'block';
+      return;
+    }
+  }
+
+  const isReady = user && user.emailVerified;
+  document.getElementById('auth-forms').style.display   = isReady ? 'none' : 'block';
+  document.getElementById('controls').style.display     = isReady ? 'flex' : 'none';
+});
+
+// 3) DOM 完全構築後にボタンのハンドラを設定
+document.addEventListener('DOMContentLoaded', () => {
+  // サインアップ＋リンク送信
+  document.getElementById('btn-send-link')
+    .addEventListener('click', async () => {
+      const userId = document.getElementById('signup-userid').value.trim();
+      const email  = document.getElementById('signup-email').value.trim();
+      const errEl  = document.getElementById('signup-error');
+      errEl.style.display = 'none';
+
+      if (!userId || !email) {
+        errEl.textContent = '両方入力してください';
+        return errEl.style.display = 'block';
+      }
+      try {
+        await sendSignInLink(email, userId);
+        alert('確認メールを送りました。リンクを開いて認証を完了してください。');
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+
+  // 成功ポップアップの OK ボタン
+  document.getElementById('success-ok')
+    .addEventListener('click', () => {
+      document.getElementById('auth-success').style.display = 'none';
+      // 認証済みユーザー用に地図を初期化
+      initMap();
+    });
+});
+
+// 4) 検索ロジック
 async function onSearch() {
   const place = autocomplete.getPlace();
   if (!place || !place.geometry) {
@@ -96,10 +96,10 @@ async function multiKeywordSearch(loc, keywords) {
     const ul = document.getElementById('results');
     ul.innerHTML = '';
     for (const p of places) {
-      const li = document.createElement('li');
-      li.textContent = p.name;
-      const { serves_vegetarian_food } = await getVegetarianFlagFn(p.place_id);
-      if (!serves_vegetarian_food) li.textContent += ' ❗️';
+      const li   = document.createElement('li');
+      const flag = (await getVegetarianFlagFn(p.place_id))
+                     .serves_vegetarian_food;
+      li.textContent = p.name + (flag ? '' : ' ❗️');
       ul.appendChild(li);
     }
   } catch (e) {
