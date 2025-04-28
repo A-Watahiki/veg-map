@@ -9,16 +9,17 @@ import {
   getVegetarianFlagFn
 } from './firebase-init.js';
 import {
-  onAuthStateChanged,
-  signInWithEmailLink
+  onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
 let map, autocomplete;
 const API_KEY = 'AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA';
 let mapsLoaded = false;
+const markers = [];
 
 // 1) initMap をグローバルに登録
 function initMap() {
+  console.log('▶️ initMap called');
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
@@ -27,8 +28,10 @@ function initMap() {
     document.getElementById('location-input')
   );
   autocomplete.bindTo('bounds', map);
-  document.getElementById('search-btn')
-    .addEventListener('click', onSearch);
+
+  const btn = document.getElementById('search-btn');
+  console.log('📦 search-btn:', btn);
+  btn.addEventListener('click', onSearch);
 }
 window.initMap = initMap;
 
@@ -64,8 +67,8 @@ onAuthStateChanged(auth, async user => {
   }
 
   const isReady = user && user.emailVerified;
-  document.getElementById('auth-forms').style.display   = isReady ? 'none' : 'block';
-  document.getElementById('controls').style.display     = isReady ? 'flex' : 'none';
+  document.getElementById('auth-forms').style.display = isReady ? 'none' : 'block';
+  document.getElementById('controls').style.display = isReady ? 'flex' : 'none';
 
   if (isReady) {
     try {
@@ -76,8 +79,7 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-
-// 4) DOM 完全構築後—or 読み込み済みなら即—にボタンのハンドラを設定
+// 4) 認証フォーム周りのイベントハンドラを登録
 function setupAuthEventHandlers() {
   console.log('🔧 setupAuthEventHandlers');
 
@@ -86,11 +88,11 @@ function setupAuthEventHandlers() {
   if (!btn) {
     console.warn('❗️ btn-send-link が取得できません');
   } else {
-    btn.addEventListener('click', async (e) => {
+    btn.addEventListener('click', async () => {
       console.log('🖱️ btn-send-link clicked');
       const userID = document.getElementById('signup-userid').value.trim();
-      const email  = document.getElementById('signup-email').value.trim();
-      const errEl  = document.getElementById('signup-error');
+      const email = document.getElementById('signup-email').value.trim();
+      const errEl = document.getElementById('signup-error');
       errEl.style.display = 'none';
 
       if (!userID || !email) {
@@ -132,34 +134,53 @@ if (document.readyState === 'loading') {
   setupAuthEventHandlers();
 }
 
-
-
 // 5) 検索ロジック
 async function onSearch() {
+  console.log('🖱️ onSearch');
   const place = autocomplete.getPlace();
   if (!place || !place.geometry) {
     alert('候補から選択してください');
     return;
   }
+  console.log('📍 selected location:', place.geometry.location);
   map.setCenter(place.geometry.location);
   await multiKeywordSearch(place.geometry.location, [
     'vegetarian','vegan','ヴィーガン','ベジタリアン','素食','マクロビ','マクロビオティック'
   ]);
 }
 
+// 6) 結果取得と描画
 async function multiKeywordSearch(loc, keywords) {
+  console.log('🔍 multiKeywordSearch', loc, keywords);
   try {
     const places = await searchPlacesFn(loc, keywords);
+    console.log('🔎 places result:', places);
+
+    // 既存マーカーをクリア
+    markers.forEach(m => m.setMap(null));
+    markers.length = 0;
+
     const ul = document.getElementById('results');
     ul.innerHTML = '';
+
     for (const p of places) {
-      const li   = document.createElement('li');
-      const flag = (await getVegetarianFlagFn(p.place_id))
-                     .serves_vegetarian_food;
+      const li = document.createElement('li');
+      const flag = (await getVegetarianFlagFn(p.place_id)).serves_vegetarian_food;
       li.textContent = p.name + (flag ? '' : ' ❗️');
       ul.appendChild(li);
+
+      // マーカー立てる
+      if (p.geometry && p.geometry.location) {
+        const marker = new google.maps.Marker({
+          position: p.geometry.location,
+          map,
+          title: p.name
+        });
+        markers.push(marker);
+      }
     }
   } catch (e) {
+    console.error('検索エラー:', e);
     alert('検索エラー: ' + e.message);
   }
 }
