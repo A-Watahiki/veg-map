@@ -1,4 +1,5 @@
-import { auth, db, registerInitMap } from './firebase-init.js';
+// main.js
+import { auth, db, registerInitMap, verifyUsername, searchPlacesFn, getVegetarianFlagFn } from './firebase-init.js';
 
 // Auth functions from CDN build
 import {
@@ -10,20 +11,11 @@ import {
   signInWithPopup
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
-// Firestore functions from CDN build
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-
 let map, service, autocomplete, distanceService, originLocation;
 
 // Firestore 初期化完了イベントの待機処理
 window.addEventListener('firebaseReady', () => {
   console.log('Firebase準備完了、Firestore利用可能');
-
   registerInitMap(initMap);
 });
   
@@ -65,31 +57,14 @@ function initMap() {
 // 2) 検索ロジック
 // ──────────────
 async function multiKeywordSearch(location, keywords) {
-  const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch(
-    'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/searchPlaces',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`,
-      },
-      body: JSON.stringify({
-        location: { lat: location.lat(), lng: location.lng() },
-        keywords
-      })
-    }
-  );
-  if (res.status === 401) {
-    alert('検索するにはログインが必要です');
-    return;
+  try {
+    // Functions 経由で検索
+    const places = await searchPlacesFn({ lat: location.lat(), lng: location.lng() }, keywords);
+    drawResults(places);
+  } catch (e) {
+    console.error('検索エラー:', e);
+    alert('検索に失敗しました');
   }
-  if (!res.ok) {
-    console.error('検索エラー:', await res.text());
-    return;
-  }
-  const { places } = await res.json();
-  drawResults(places);
 }
 
 // …（fetchVegetarianFlag, drawResults のコードは省略）…
@@ -138,17 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return errorEl.style.display = 'block';
     }
     try {
-      const snap = await getDoc(doc(db, 'allowedUsers', inputName));
-      console.log('照合結果:', snap.exists() ? snap.data() : 'なし');
-      if (!snap.exists()) {
+      const { ok } = await verifyUsername(inputName);
+      if (!ok) {
         errorEl.textContent = 'ユーザー名が名簿と一致しません。';
         return errorEl.style.display = 'block';
       }
       errorEl.style.display = 'none';
-      await setDoc(doc(db, 'users', auth.currentUser.uid), {
-        username:   inputName,
-        verifiedAt: serverTimestamp()
-      }, { merge: true });
       document.getElementById('username-verification').style.display = 'none';
       document.getElementById('controls').style.display              = 'flex';
     } catch (e) {
