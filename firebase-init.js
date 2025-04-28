@@ -32,7 +32,7 @@ export const db   = initializeFirestore(app, {}, 'veg-map');
 export async function verifyUsername(username) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(
-    'https://verifyusername-ictqzxcg5a-an.a.run.app',
+    'https://verifyusername-ictqzxcg5a-an.a.run.app/verifyUsername',
     {
       method: 'POST',
       headers: {
@@ -84,5 +84,5 @@ export async function getVegetarianFlagFn(placeId) {
 window.dispatchEvent(new Event('firebaseReady'));
 
 // デバッグ用公開
-window.auth      = auth;
-window.db        = db;
+window.auth = auth;
+window.db   = db;
