@@ -32,7 +32,8 @@ export const db   = initializeFirestore(app, {}, 'veg-map');
 export async function verifyUsername(username) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(
-    'https://verifyusername-ictqzxcg5a-an.a.run.app/verifyUsername',
+    // ベース URL のみ、パスは不要
+    'https://verifyusername-ictqzxcg5a-an.a.run.app',
     {
       method: 'POST',
       headers: {
@@ -54,7 +55,8 @@ export async function verifyUsername(username) {
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(
-    'https://searchplaces-ictqzxcg5a-an.a.run.app/searchPlaces',
+    // こちらもベース URL のみ
+    'https://searchplaces-ictqzxcg5a-an.a.run.app',
     {
       method: 'POST',
       headers: {
