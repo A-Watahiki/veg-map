@@ -1,5 +1,5 @@
 // main.js
-import { auth, db, registerInitMap, verifyUsername, searchPlacesFn, getVegetarianFlagFn } from './firebase-init.js';
+import { auth, db, verifyUsername, searchPlacesFn, getVegetarianFlagFn } from './firebase-init.js';
 
 // Auth functions from CDN build
 import {
@@ -16,6 +16,9 @@ let map, service, autocomplete, distanceService, originLocation;
 // Firestore 初期化完了イベントの待機処理
 window.addEventListener('firebaseReady', () => {
   console.log('Firebase準備完了、Firestore利用可能');
+  // Google Maps のコールバックとして使用
+  window.initMap = initMap;
+});
   registerInitMap(initMap);
 });
   
