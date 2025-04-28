@@ -31,7 +31,7 @@ export const db   = initializeFirestore(app, {}, 'veg-map');
  */
 export async function verifyUsername(username) {
   const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch('https://verifyusername-ictqzxcg5a-an.a.run.app/verifyUsername', {
+  const res = await fetch('https://verifyusername-ictqzxcg5a-an.a.run.app/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
