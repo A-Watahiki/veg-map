@@ -15,7 +15,6 @@
     https://maps.googleapis.com
     https://maps.gstatic.com
     https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
-    https://asia-northeast1-blissful-shore-458002.cloudfunctions.net
     https://verifyusername-ictqzxcg5a-an.a.run.app
     https://searchplaces-ictqzxcg5a-an.a.run.app
     https://identitytoolkit.googleapis.com
@@ -45,9 +44,9 @@
     https://apis.google.com;
 ">
 
-  <!-- 1) Firebase 初期化モジュール -->
+  <!-- Firebase 初期化モジュール -->
   <script type="module" src="./firebase-init.js"></script>
-  <!-- 2) アプリ本体 -->
+  <!-- アプリ本体 -->
   <script type="module" src="./main.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -55,46 +54,37 @@
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
-<!-- 認証フォーム -->
-<div id="auth-forms">
-  <!-- 最初から表示：メール登録＋ユーザーID -->
-  <div id="signup-form" style="margin-top:1rem;">
-    <h3>メールで新規登録</h3>
-    <input id="signup-userid"   type="text"     placeholder="ユーザーIDを入力" />
-    <input id="signup-email"    type="email"    placeholder="メールアドレス" />
-    <input id="signup-password" type="password" placeholder="パスワード（6文字以上）" />
-    <button id="btn-email-signup">登録する</button>
-    <p><a href="#" id="link-to-login">既にアカウントをお持ちの方はこちら</a></p>
-    <p id="signup-error" style="color:red; display:none;"></p>
+  <!-- 認証フォーム -->
+  <div id="auth-forms">
+    <div id="signup-form" style="margin-top:1rem;">
+      <h3>新規登録</h3>
+      <input id="signup-userid"   type="text"     placeholder="ユーザーID" />
+      <input id="signup-email"    type="email"    placeholder="メールアドレス" />
+      <button id="btn-send-link">登録 & メール送信</button>
+      <p id="signup-error" style="color:red; display:none;"></p>
+    </div>
   </div>
 
-  <!-- ログインフォーム -->
-  <div id="login-form" style="display:none; margin-top:1rem;">
-    <h3>ログイン</h3>
-    <input id="login-email"    type="email"    placeholder="メールアドレス" />
-    <input id="login-password" type="password" placeholder="パスワード" />
-    <button id="btn-login">ログイン</button>
-    <p id="login-error" style="color:red; display:none;"></p>
+  <!-- 認証成功ポップアップ -->
+  <div id="auth-success" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); padding:1rem; background:#fff; border:1px solid #ccc; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+    <p>認証に成功しました！アプリをお楽しみください。</p>
+    <button id="success-ok">OK</button>
   </div>
-</div>
-<!-- ここまで認証フォーム -->
 
-
-  <div id="controls" style="display: none;">
+  <!-- 検索コントロール -->
+  <div id="controls" style="display:none; margin:1rem 0;">
     <input id="location-input" type="text" placeholder="目的地を入力してください" />
     <button id="search-btn">検索</button>
   </div>
   <p class="note">
     ※ 「❗️」マークは「ベジタリアン」「ヴィーガン」などの検索結果に出るものの  
-    ビジネスプロフィールに「ベジタリアン料理があるお店」の表記がないお店。  
-    ベジタリアンメニューがあるかどうかはとりわけ要確認。
+    ビジネスプロフィールに「ベジタリアン料理があるお店」の表記がないお店。
   </p>
   <div class="map-container">
     <div id="map"></div>
     <ul id="results"></ul>
   </div>
 
-<script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap">
-</script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqBaGedqbzQ5ad-6_0-_JNKy2BDILsqGA&libraries=places,geometry&callback=initMap"></script>
 </body>
 </html>
