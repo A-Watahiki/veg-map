@@ -3,7 +3,10 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebas
 import {
   getAuth,
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { initializeFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
@@ -26,6 +29,12 @@ await setPersistence(auth, browserLocalPersistence);
 
 // Firestore (veg-map データベース指定)
 export const db = initializeFirestore(app, {}, 'veg-map');
+
+// ActionCodeSettings for email link (adjust URL as needed)
+const actionCodeSettings = {
+  url: window.location.origin,
+  handleCodeInApp: true
+};
 
 // ----------
 // Cloud Run (v2) / Cloud Functions (v1) HTTP トリガー呼び出しラッパー
@@ -51,6 +60,37 @@ export async function verifyUsername(username) {
   );
   if (!res.ok) throw new Error(`verifyUsername failed: ${res.status}`);
   return res.json();
+}
+
+/**
+ * ユーザーID＋メールリンク認証：ユーザーID照合後にリンク送信
+ * @param {string} email
+ * @param {string} userId
+ */
+export async function sendSignInLink(email, userId) {
+  // 1) Firestore 上で userID 照合
+  const { ok } = await verifyUsername(userId);
+  if (!ok) throw new Error('ユーザーIDが名簿と一致しません。');
+  // 2) リンク送信
+  window.localStorage.setItem('emailForSignIn', email);
+  return sendSignInLinkToEmail(auth, email, actionCodeSettings);
+}
+
+/**
+ * メールリンクでサインイン（ページ読み込み時に呼び出す）
+ */
+export async function handleEmailLinkSignIn() {
+  const link = window.location.href;
+  if (isSignInWithEmailLink(auth, link)) {
+    let email = window.localStorage.getItem('emailForSignIn');
+    if (!email) {
+      email = window.prompt('メールアドレスを入力してください');
+    }
+    const result = await signInWithEmailLink(auth, email, link);
+    window.localStorage.removeItem('emailForSignIn');
+    return result.user;
+  }
+  return null;
 }
 
 /**

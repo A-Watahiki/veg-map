@@ -1,27 +1,36 @@
 // main.js
-import { auth, verifyUsername, searchPlacesFn, getVegetarianFlagFn } from './firebase-init.js';
+import { auth, sendSignInLink, handleEmailLinkSignIn, searchPlacesFn, getVegetarianFlagFn } from './firebase-init.js';
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  sendEmailVerification
+  onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
 let map, autocomplete;
 
 // ──────────────
+// ページロード時にメールリンク認証を処理
+// ──────────────
+handleEmailLinkSignIn()
+  .then(user => {
+    if (user) {
+      alert('認証に成功しました！');
+      // 認証後に地図を表示
+      window.initMap = initMap;
+      document.getElementById('controls').style.display = 'flex';
+      document.getElementById('signup-form').style.display = 'none';
+    }
+  })
+  .catch(console.error);
+
+// ──────────────
 // 認証状態変化ハンドラ
 // ──────────────
 onAuthStateChanged(auth, user => {
-  const hasUser = !!user;
-  const verified = hasUser && user.emailVerified;
+  const verified = user && user.emailVerified;
 
-  document.getElementById('signup-form').style.display = !hasUser ? 'block' : 'none';
-  document.getElementById('login-form').style.display  = hasUser && !user.emailVerified ? 'block' : 'none';
-  document.getElementById('controls').style.display    = verified ? 'flex'  : 'none';
-
+  // UI切り替え
+  document.getElementById('signup-form').style.display = verified ? 'none' : 'block';
+  document.getElementById('controls').style.display   = verified ? 'flex' : 'none';
   if (verified) {
-    // Google Maps API callback 用に initMap をグローバル公開
     window.initMap = initMap;
   }
 });
@@ -30,49 +39,25 @@ onAuthStateChanged(auth, user => {
 // フォーム設定
 // ──────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // サインアップ＋ID照合＋確認メール送信
+  // メールリンク送信＋ID照合
   document.getElementById('btn-email-signup').addEventListener('click', async () => {
     const email  = document.getElementById('signup-email').value.trim();
-    const pwd    = document.getElementById('signup-password').value;
     const userId = document.getElementById('signup-userid').value.trim();
     const errEl  = document.getElementById('signup-error');
     errEl.style.display = 'none';
 
-    if (!email || !pwd || !userId) {
-      errEl.textContent = '全ての項目を入力してください。';
+    if (!email || !userId) {
+      errEl.textContent = 'メールアドレスとユーザーIDを入力してください。';
       return errEl.style.display = 'block';
     }
     try {
-      // 1) Firebase Auth に登録
-      const cred = await createUserWithEmailAndPassword(auth, email, pwd);
-      // 2) Firestore 上の allowedUsers と照合
-      const { ok } = await verifyUsername(userId);
-      if (!ok) throw new Error('ID照合に失敗しました');
-      // 3) 照合成功なら確認メールを送信
-      await sendEmailVerification(cred.user);
-      alert('ID確認OK! 確認メールを送信しました。リンクをクリックしてからログインしてください。');
+      // メールアドレスを保存
+      window.localStorage.setItem('emailForSignIn', email);
+      // ユーザーID照合とリンク送信
+      await sendSignInLink(email, userId);
+      alert('確認メールを送信しました。リンクをクリックしてアクセスしてください。');
     } catch (e) {
-      errEl.textContent = e.message.includes('ID照合')
-        ? 'ユーザーIDが名簿と一致しません。'
-        : '登録エラー: ' + e.message;
-      errEl.style.display = 'block';
-    }
-  });
-
-  // ログイン送信
-  document.getElementById('btn-login').addEventListener('click', async () => {
-    const email = document.getElementById('login-email').value.trim();
-    const pwd   = document.getElementById('login-password').value;
-    const errEl = document.getElementById('login-error');
-    errEl.style.display = 'none';
-
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, pwd);
-      if (!cred.user.emailVerified) {
-        throw new Error('メールを確認してからログインしてください');
-      }
-    } catch (e) {
-      errEl.textContent = e.message;
+      errEl.textContent = 'エラー: ' + e.message;
       errEl.style.display = 'block';
     }
   });
