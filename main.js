@@ -1,4 +1,6 @@
 // main.js
+console.log('🟢 main.js 実行開始');
+
 import {
   auth,
   handleEmailLinkSignIn,
