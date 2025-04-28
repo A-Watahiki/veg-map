@@ -1,6 +1,13 @@
 // firebase-init.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getAuth }      from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+import {
+    getAuth,
+    setPersistence,
+    browserLocalPersistence
+  } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+
 import { initializeFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -13,11 +20,15 @@ const firebaseConfig = {
   measurementId: "G-TLC59XH1R5"
 };
 
-// Firebase アプリ初期化
 const app = initializeApp(firebaseConfig);
 
-// Auth & Firestore (veg-map データベース指定)
+
+
+// Auth & 永続化設定
 export const auth = getAuth(app);
+await setPersistence(auth, browserLocalPersistence);
+
+
 export const db   = initializeFirestore(app, {}, 'veg-map');
 
 // ----------
