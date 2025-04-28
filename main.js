@@ -13,11 +13,17 @@ let map, autocomplete;
 // 認証状態変化ハンドラ
 // ──────────────
 onAuthStateChanged(auth, user => {
-  const ready = user && user.emailVerified;
-  document.getElementById('signup-form').style.display = ready ? 'none' : 'block';
-  document.getElementById('login-form').style.display  = ready ? 'none' : 'none';
-  document.getElementById('controls').style.display    = ready ? 'flex' : 'none';
-  if (ready) window.initMap = initMap;
+  const hasUser = !!user;
+  const verified = hasUser && user.emailVerified;
+
+  document.getElementById('signup-form').style.display = !hasUser ? 'block' : 'none';
+  document.getElementById('login-form').style.display  = hasUser && !user.emailVerified ? 'block' : 'none';
+  document.getElementById('controls').style.display    = verified ? 'flex'  : 'none';
+
+  if (verified) {
+    // Google Maps API callback 用に initMap をグローバル公開
+    window.initMap = initMap;
+  }
 });
 
 // ──────────────
@@ -37,32 +43,34 @@ document.addEventListener('DOMContentLoaded', () => {
       return errEl.style.display = 'block';
     }
     try {
-      // 1) ユーザー登録
+      // 1) Firebase Auth に登録
       const cred = await createUserWithEmailAndPassword(auth, email, pwd);
-      // 2) ID 照合
+      // 2) Firestore 上の allowedUsers と照合
       const { ok } = await verifyUsername(userId);
       if (!ok) throw new Error('ID照合に失敗しました');
-      // 3) 照合OKなら確認メール
+      // 3) 照合成功なら確認メールを送信
       await sendEmailVerification(cred.user);
       alert('ID確認OK! 確認メールを送信しました。リンクをクリックしてからログインしてください。');
     } catch (e) {
-      errEl.textContent = e.message.includes('ID照合') 
+      errEl.textContent = e.message.includes('ID照合')
         ? 'ユーザーIDが名簿と一致しません。'
         : '登録エラー: ' + e.message;
       errEl.style.display = 'block';
     }
   });
 
-  // ログイン
+  // ログイン送信
   document.getElementById('btn-login').addEventListener('click', async () => {
     const email = document.getElementById('login-email').value.trim();
     const pwd   = document.getElementById('login-password').value;
     const errEl = document.getElementById('login-error');
     errEl.style.display = 'none';
+
     try {
       const cred = await signInWithEmailAndPassword(auth, email, pwd);
-      if (!cred.user.emailVerified) 
+      if (!cred.user.emailVerified) {
         throw new Error('メールを確認してからログインしてください');
+      }
     } catch (e) {
       errEl.textContent = e.message;
       errEl.style.display = 'block';
@@ -75,7 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ──────────────
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 35.681236, lng: 139.767125 }, zoom: 14
+    center: { lat: 35.681236, lng: 139.767125 },
+    zoom: 14
   });
   autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('location-input')
@@ -104,8 +113,8 @@ async function multiKeywordSearch(loc, keywords) {
     for (const p of places) {
       const li = document.createElement('li');
       li.textContent = p.name;
-      const flag = (await getVegetarianFlagFn(p.place_id)).serves_vegetarian_food;
-      if (!flag) li.textContent += ' ❗️';
+      const { serves_vegetarian_food } = await getVegetarianFlagFn(p.place_id);
+      if (!serves_vegetarian_food) li.textContent += ' ❗️';
       ul.appendChild(li);
     }
   } catch (e) {
