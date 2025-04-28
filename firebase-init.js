@@ -30,54 +30,37 @@ await setPersistence(auth, browserLocalPersistence);
 // Firestore (veg-map データベース指定)
 export const db = initializeFirestore(app, {}, 'veg-map');
 
-// ActionCodeSettings for email link (adjust URL as needed)
+// メールリンク用設定 (自身の origin にリダイレクト)
 const actionCodeSettings = {
   url: window.location.origin,
   handleCodeInApp: true
 };
 
-// ----------
-// Cloud Run (v2) / Cloud Functions (v1) HTTP トリガー呼び出しラッパー
-// ----------
+// Cloud Run（Gen2）エンドポイントのベース URL
+const VERIFY_URL       = 'https://verifyusername-ictqzxcg5a-an.a.run.app/';
+const SEARCHPLACES_URL = 'https://searchplaces-ictqzxcg5a-an.a.run.app/';
+const FLAG_URL_BASE    = 'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag';
+
+// ——————————————————————————————
+// 1) ユーザーID＋メールリンク 認証ワークフロー
+// ——————————————————————————————
 
 /**
- * ユーザー名照合 (Gen2 Cloud Run functions)
- * @param {string} username
- * @returns {Promise<{ok: boolean}>}
- */
-export async function verifyUsername(username) {
-  const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch(
-    'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/verifyUsername',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ username })
-    }
-  );
-  if (!res.ok) throw new Error(`verifyUsername failed: ${res.status}`);
-  return res.json();
-}
-
-/**
- * ユーザーID＋メールリンク認証：ユーザーID照合後にリンク送信
- * @param {string} email
- * @param {string} userId
+ * 1) allowedUsers 照合 → 2) 照合OKならメールリンク送信
+ * @param {string} email 
+ * @param {string} userId 
  */
 export async function sendSignInLink(email, userId) {
-  // 1) Firestore 上で userID 照合
-  const { ok } = await verifyUsername(userId);
+  // 1) Firestore で ID 照合（認証前）
+  const { ok } = await verifyUsernameUnauthenticated(userId);
   if (!ok) throw new Error('ユーザーIDが名簿と一致しません。');
-  // 2) リンク送信
+  // 2) メールリンク送信
   window.localStorage.setItem('emailForSignIn', email);
   return sendSignInLinkToEmail(auth, email, actionCodeSettings);
 }
 
 /**
- * メールリンクでサインイン（ページ読み込み時に呼び出す）
+ * ページ読み込み時に呼び出して、リンク認証を完了
  */
 export async function handleEmailLinkSignIn() {
   const link = window.location.href;
@@ -93,39 +76,51 @@ export async function handleEmailLinkSignIn() {
   return null;
 }
 
+// ——————————————————————————————
+// 2) ユーザーID照合：認証前版（トークン不要）
+// ——————————————————————————————
+
 /**
- * Nearby Search (Gen2 Cloud Run functions)
- * @param {{lat:number,lng:number}} location
- * @param {string[]} keywords
- * @returns {Promise<any[]>}
+ * auth.currentUser が null でも使えるよう、認証チェックをしない
+ * @param {string} username 
+ */
+export async function verifyUsernameUnauthenticated(username) {
+  const res = await fetch(VERIFY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username })
+  });
+  if (!res.ok) throw new Error(`verifyUsername failed: ${res.status}`);
+  return res.json();
+}
+
+// ——————————————————————————————
+// 3) 場所検索／フラグ取得
+// ——————————————————————————————
+
+/**
+ * Cloud Run searchPlaces (認証後に呼ぶ)
  */
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch(
-    'https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/searchPlaces',
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ location, keywords })
-    }
-  );
+  const res = await fetch(SEARCHPLACES_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    },
+    body: JSON.stringify({ location, keywords })
+  });
   if (!res.ok) throw new Error(`searchPlaces failed: ${res.status}`);
   return (await res.json()).places;
 }
 
 /**
- * Vegetarian Flag 取得 (Gen1 Cloud Functions)
- * @param {string} placeId
- * @returns {Promise<{serves_vegetarian_food: boolean}>}
+ * Cloud Functions getVegetarianFlag (認証不要)
  */
 export async function getVegetarianFlagFn(placeId) {
   const res = await fetch(
-    `https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag?place_id=${encodeURIComponent(
-      placeId
-    )}`
+    `${FLAG_URL_BASE}?place_id=${encodeURIComponent(placeId)}`
   );
   if (!res.ok) throw new Error(`getVegetarianFlag failed: ${res.status}`);
   return res.json();
@@ -136,4 +131,4 @@ window.dispatchEvent(new Event('firebaseReady'));
 
 // デバッグ用公開
 window.auth = auth;
-window.db = db;
+window.db   = db;
