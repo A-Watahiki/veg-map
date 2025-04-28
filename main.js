@@ -75,9 +75,6 @@ onAuthStateChanged(auth, async user => {
 });
 
 
-js
-コピーする
-編集する
 // 4) DOM 完全構築後にボタンのハンドラを設定
 document.addEventListener('DOMContentLoaded', () => {
   console.log('➡️ DOMContentLoaded fired');
