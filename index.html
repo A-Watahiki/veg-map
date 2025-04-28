@@ -55,41 +55,29 @@
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
-<!-- ここから認証フォーム -->
+<!-- 認証フォーム -->
 <div id="auth-forms">
-  <!-- サインアップ／選択メソッド -->
-  <div id="signup-methods">
-    <!-- フォームを開くだけのボタンなので id を別に -->
-    <button id="btn-email-show">メールで登録</button>
-  </div>
-
-  <!-- メール登録フォーム（最初は非表示） -->
-  <div id="signup-form" style="display:none; margin-top:1rem;">
+  <!-- 最初から表示：メール登録＋ユーザーID -->
+  <div id="signup-form" style="margin-top:1rem;">
     <h3>メールで新規登録</h3>
+    <input id="signup-userid"   type="text"     placeholder="ユーザーIDを入力" />
     <input id="signup-email"    type="email"    placeholder="メールアドレス" />
     <input id="signup-password" type="password" placeholder="パスワード（6文字以上）" />
-    <!-- こちらが本当の「登録する」ボタン -->
     <button id="btn-email-signup">登録する</button>
     <p><a href="#" id="link-to-login">既にアカウントをお持ちの方はこちら</a></p>
+    <p id="signup-error" style="color:red; display:none;"></p>
   </div>
 
   <!-- ログインフォーム -->
-  <div id="login-form" style="display:none">
+  <div id="login-form" style="display:none; margin-top:1rem;">
     <h3>ログイン</h3>
     <input id="login-email"    type="email"    placeholder="メールアドレス" />
     <input id="login-password" type="password" placeholder="パスワード" />
     <button id="btn-login">ログイン</button>
+    <p id="login-error" style="color:red; display:none;"></p>
   </div>
 </div>
 <!-- ここまで認証フォーム -->
-<!-- ユーザー名照合フォーム（ログイン後に表示） -->
-<div id="username-verification" style="display:none; margin:1rem 0;">
-  <h3>ユーザー名の確認</h3>
-  <p>ご所属の名簿に掲載されている「ユーザー名」を入力してください。</p>
-  <input id="username-input" type="text" placeholder="ユーザー名を入力" />
-  <button id="btn-verify-username">確認</button>
-  <p id="username-error" style="color:red; display:none;">ユーザー名が名簿と一致しません。</p>
-</div>
 
 
   <div id="controls" style="display: none;">
