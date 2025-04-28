@@ -21,7 +21,7 @@ export const auth = getAuth(app);
 export const db   = initializeFirestore(app, {}, 'veg-map');
 
 // ----------
-// Cloud Run (v2) エンドポイントを fetch で呼ぶラッパー
+// Cloud Functions (v1/v2) HTTPS トリガー エンドポイント
 // ----------
 
 /**
@@ -32,8 +32,7 @@ export const db   = initializeFirestore(app, {}, 'veg-map');
 export async function verifyUsername(username) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(
-    // ベース URL のみ、パスは不要
-    'https://verifyusername-ictqzxcg5a-an.a.run.app',
+    'https://asia-northeast1-blissful-shore-458002.cloudfunctions.net/verifyUsername',
     {
       method: 'POST',
       headers: {
@@ -55,8 +54,7 @@ export async function verifyUsername(username) {
 export async function searchPlacesFn(location, keywords) {
   const idToken = await auth.currentUser.getIdToken();
   const res = await fetch(
-    // こちらもベース URL のみ
-    'https://searchplaces-ictqzxcg5a-an.a.run.app',
+    'https://asia-northeast1-blissful-shore-458002.cloudfunctions.net/searchPlaces',
     {
       method: 'POST',
       headers: {
@@ -76,7 +74,7 @@ export async function searchPlacesFn(location, keywords) {
  */
 export async function getVegetarianFlagFn(placeId) {
   const res = await fetch(
-    `https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net/getVegetarianFlag?place_id=${encodeURIComponent(placeId)}`
+    `https://asia-northeast1-blissful-shore-458002.cloudfunctions.net/getVegetarianFlag?place_id=${encodeURIComponent(placeId)}`
   );
   if (!res.ok) throw new Error(`getVegetarianFlag failed: ${res.status}`);
   return res.json();
