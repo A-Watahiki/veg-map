@@ -6,7 +6,6 @@ import {
   persistentLocalCache
 } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
-
 const firebaseConfig = {
   apiKey: "AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY",
   authDomain: "blissful-shore-458002-e9.firebaseapp.com",
@@ -17,23 +16,22 @@ const firebaseConfig = {
   measurementId: "G-TLC59XH1R5"
 };
 
-
 // Firebase アプリ初期化
 const app = initializeApp(firebaseConfig);
 
 // Auth
 export const auth = getAuth(app);
 
-// Firestore 初期化 (デフォルトDB、databaseId指定なし)
+// Firestore 初期化（既存データベース veg-map 指定）
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache(),   // Tab間キャッシュ共有
-  experimentalForceLongPolling: true,   // WebChannel失敗時は常にロングポーリング
-  useFetchStreams: false                // fetchStreamsを使わずXHR
+  databaseId: 'veg-map',              // データベースIDを明示的に指定
+  localCache: persistentLocalCache(), // Tab間キャッシュ共有
+  experimentalForceLongPolling: true, // WebChannel失敗時は常にロングポーリング
+  useFetchStreams: false              // fetchStreamsを使わずXHR
 });
 
 // Firebase初期化完了を通知するイベントを発火
-const firebaseReadyEvent = new Event('firebaseReady');
-window.dispatchEvent(firebaseReadyEvent);
+window.dispatchEvent(new Event('firebaseReady'));
 
 // デバッグ用グローバル公開
 window.auth = auth;
