@@ -1,14 +1,15 @@
 {
   "name": "veg-map_functions",
   "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-        "start": "functions-framework --target=app --port=$PORT"
-      },
+    "start": "node index.js"
+  },
   "dependencies": {
-    "@google-cloud/functions-framework": "^3.1.3",
+    "express": "^4.18.3",
     "firebase-admin": "^11.10.1",
     "node-fetch": "^2.6.7",
-    "express": "^4.18.3"
+    "cors": "^2.8.5"
   },
   "engines": {
     "node": "20"
