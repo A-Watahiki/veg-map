@@ -1,4 +1,4 @@
-// main.js (新版 Places API 版)
+// main.js (新版 Places API v1 + Text Search 対応版)
 console.log('🟢 main.js 実行開始');
 
 import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
@@ -60,31 +60,25 @@ async function onSearch() {
   );
 }
 
-// 4) multiKeywordSearch (新版 Nearby Search + 既存詳細取得)
+// 4) multiKeywordSearch (Text Search → 詳細取得 → 距離計算 → 描画)
 async function multiKeywordSearch(loc, keywords) {
-  // 4-1) 新版 Places API searchNearby
-  const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
-  const placeMap = new Map();
+  // 4-1) Text Searchによる placeId の収集
+  const { Place } = await google.maps.importLibrary('places');
+  const placeIds = new Set();
   for (const keyword of keywords) {
     const request = {
-      fields: ['placeId'],
+      query: keyword,
       locationRestriction: { center: new google.maps.LatLng(loc.lat, loc.lng), radius: 1500 },
-      includedPrimaryTypes: ['restaurant'],
-      keyword,
-      rankPreference: SearchNearbyRankPreference.DISTANCE,
-      maxResultCount: 60
+      type: 'restaurant',
+      fields: ['placeId']
     };
     // @ts-ignore
-    const { places } = await Place.searchNearby(request);
-    for (const p of places) {
-      if (!placeMap.has(p.placeId)) {
-        placeMap.set(p.placeId, { place_id: p.placeId });
-      }
-    }
+    const { places } = await Place.textSearch(request);
+    places.forEach(p => placeIds.add(p.placeId));
   }
-  const rawPlaces = Array.from(placeMap.values());
+  const rawPlaces = Array.from(placeIds).map(id => ({ place_id: id }));
 
-  // 4-2) 詳細取得（従来通り）
+  // 4-2) 詳細取得
   const service = new google.maps.places.PlacesService(map);
   const details = (await Promise.all(
     rawPlaces.map(p => new Promise(resolve => {
@@ -109,7 +103,13 @@ async function multiKeywordSearch(loc, keywords) {
   if (dm.status === google.maps.DistanceMatrixStatus.OK) {
     items = details.map((d, i) => {
       const el = dm.res.rows[0].elements[i];
-      return { detail: d, distanceValue: el.distance.value, distanceText: el.distance.text, durationValue: el.duration.value, durationText: el.duration.text };
+      return {
+        detail: d,
+        distanceValue: el.distance.value,
+        distanceText: el.distance.text,
+        durationValue: el.duration.value,
+        durationText: el.duration.text
+      };
     })
     .filter(item => item.distanceValue <= 1500)
     .sort((a, b) => a.durationValue - b.durationValue);
