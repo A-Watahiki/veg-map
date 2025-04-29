@@ -1,0 +1,5 @@
+# Secrets
+.env
+
+# Deploy script 実行で生成される一時ファイル
+*.log
