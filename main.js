@@ -121,16 +121,13 @@ async function multiKeywordSearch(loc, keywords) {
 
     // Google Maps リンク生成
     const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
-    // li全体をクリック可能に
-    li.style.cursor = 'pointer';
-    li.addEventListener('click', () => {
-      window.open(mapsUrl, '_blank', 'noopener');
-    });
-
+    // li の中身を <a> でくるむ
     li.innerHTML = `
-      <div class="item-name">${d.name}</div>
-      <div class="item-vicinity">${d.vicinity}</div>
-      <div class="item-distance">${item.distanceText} (${item.durationText})</div>
+      <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="result-link">
+        <div class="item-name">${d.name}</div>
+        <div class="item-vicinity">${d.vicinity}</div>
+        <div class="item-distance">${item.distanceText} (${item.durationText})</div>
+      </a>
     `;
     ul.appendChild(li);
 

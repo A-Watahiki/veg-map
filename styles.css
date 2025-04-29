@@ -59,6 +59,16 @@ body {
   white-space: nowrap;
 }
 
+.result-item .result-link {
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+  height: 100%;
+}
+
 .result-item:hover,
 .result-item.hover {
   background-color: #f0f8ff;
