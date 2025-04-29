@@ -22,12 +22,14 @@ body {
   padding: 0;
 }
 
-/* li はただの wrapper */
+/* li itself is hidden initially, then JS will fade it in */
 .result-item {
   margin: 0 10pt;
+  opacity: 0;                      /* hide at first */
+  transition: opacity 0.3s ease;   /* fade in when JS flips opacity */
 }
 
-/* リスト中のリンクをグリッド化 */
+/* the link inside simply lays out as grid—no manual opacity needed */
 .result-item .result-link {
   display: grid;
   grid-template-columns: 2fr 3fr 2fr;
@@ -38,9 +40,7 @@ body {
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-  opacity: 0;               /* 初期は透明、JS でフェードIN */
-  box-sizing: border-box;   /* パディング込みで幅を計算 */
+  box-sizing: border-box;
 }
 
 /* 店名 */
