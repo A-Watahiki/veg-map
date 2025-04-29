@@ -118,8 +118,13 @@ async function multiKeywordSearch(loc, keywords) {
     const li = document.createElement('li');
     li.className = 'result-item';
     li.style.opacity = '0';
+
+    // 店舗詳細へのリンク
+    const mapLink = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
     li.innerHTML = `
-      <div class="item-name">${d.name}</div>
+      <a href="${mapLink}" target="_blank" rel="noopener" class="item-name">
+        ${d.name}
+      </a>
       <div class="item-vicinity">${d.vicinity}</div>
       <div class="item-distance">${item.distanceText} (${item.durationText})</div>
     `;
