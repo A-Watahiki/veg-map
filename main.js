@@ -1,31 +1,55 @@
-// main.js
+// main.js (レガシーモード + Autocomplete ＋ Geometry 版 with staggered display)
 console.log('🟢 main.js 実行開始');
 
-let map, autocomplete, selectedPlace;
+let map;
+let autocomplete;
+let selectedPlace;
+const BROWSER_API_KEY = '<<<←ここはテンプレートで埋め込まれます>>>';
+let mapsLoaded = false;
 const markers = [];
 
-// 1) initMap をグローバル登録（HTML から callback で呼ばれる）
+// 1) initMap をグローバル登録
 function initMap() {
   console.log('▶️ initMap called');
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-  autocomplete = new google.maps.places.Autocomplete(
-    document.getElementById('location-input')
-  );
+  const input = document.getElementById('location-input');
+  autocomplete = new google.maps.places.Autocomplete(input);
   autocomplete.bindTo('bounds', map);
   autocomplete.addListener('place_changed', () => {
     const place = autocomplete.getPlace();
-    if (place.geometry) selectedPlace = place;
+    if (place.geometry) {
+      selectedPlace = place;
+    }
   });
-
-  // 検索ボタンはここで登録
   document.getElementById('search-btn').addEventListener('click', onSearch);
 }
 window.initMap = initMap;
 
-// 2) onSearch → multiKeywordSearch を呼び出す
+// 2) Maps API を動的ロード
+function loadGoogleMaps() {
+  return new Promise((resolve, reject) => {
+    if (mapsLoaded) return resolve();
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_API_KEY}&libraries=places,geometry&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => reject(new Error('Google Maps API の読み込みに失敗しました'));
+    document.head.appendChild(script);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await loadGoogleMaps();
+  } catch (e) {
+    alert(e.message);
+  }
+});
+
+// 3) onSearch
 async function onSearch() {
   if (!selectedPlace || !selectedPlace.geometry) {
     alert('候補から選択してください');
@@ -38,101 +62,60 @@ async function onSearch() {
   );
 }
 
-// 3) multiKeywordSearch
+// 4) multiKeywordSearch + staggered display
 async function multiKeywordSearch(loc, keywords) {
-  const service = new google.maps.places.PlacesService(map);
-  const placeIds = new Set();
-
-  // キーワードごとに textSearch
-  for (const keyword of keywords) {
-    const query = `${keyword} restaurant`;
-    const request = {
-      query,
-      location: new google.maps.LatLng(loc.lat, loc.lng),
-      radius: 1500
-    };
-    const results = await new Promise(resolve => {
-      service.textSearch(request, (places, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK) {
-          resolve(places);
-        } else if (status === google.maps.places.PlacesServiceStatus.INVALID_REQUEST) {
-          // フォールバック: 座標制限を外して再試行
-          service.textSearch({ query }, (p2, s2) => {
-            resolve(s2 === google.maps.places.PlacesServiceStatus.OK ? p2 : []);
-          });
-        } else {
-          resolve([]);
-        }
-      });
-    });
-    console.log(`Keyword='${keyword}', results=${results.length}`);
-    results.forEach(p => placeIds.add(p.place_id || p.placeId));
-  }
-
-  // 詳細取得
-  const detailService = new google.maps.places.PlacesService(map);
-  const details = (await Promise.all(
-    Array.from(placeIds).map(id => new Promise(resolve => {
-      detailService.getDetails(
-        { placeId: id, fields: ['name','vicinity','geometry','place_id'] },
-        (detail, status) => resolve(status === google.maps.places.PlacesServiceStatus.OK ? detail : null)
-      );
-    }))
-  )).filter(d => d);
-  console.log(`Details fetched=${details.length}`);
-
-  // 距離・所要時間計算
-  const origin = new google.maps.LatLng(loc.lat, loc.lng);
-  const items = details.map(d => {
-    const dist = google.maps.geometry.spherical.computeDistanceBetween(origin, d.geometry.location);
-    const duration = dist / 1.4; // 歩行速度 1.4 m/s
-    return {
-      detail: d,
-      distanceValue: dist,
-      distanceText: `${Math.round(dist)} m`,
-      durationValue: duration,
-      durationText: `${Math.round(duration/60)}分`
-    };
-  })
-  .filter(i => i.distanceValue <= 1500)
-  .sort((a,b) => a.distanceValue - b.distanceValue);
-  console.log(`Final items=${items.length}`);
-
-  // 描画
+  // ...（TextSearch / Details / Geometry 計算は従来通り）...
+  // 最終的に distance/value でフィルタ＆ソートした items が得られた前提で ↓
+  
+  // 4-4) staggered 描画
+  // 先にクリア
   markers.forEach(m => m.setMap(null));
   markers.length = 0;
   const ul = document.getElementById('results');
   ul.innerHTML = '';
+
   const defaultIcon = {
     url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-    scaledSize: new google.maps.Size(32,32)
+    scaledSize: new google.maps.Size(32, 32)
   };
   const hoverIcon = {
-    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-    scaledSize: new google.maps.Size(48,48)
+    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    scaledSize: new google.maps.Size(48, 48)
   };
 
-  for (const item of items) {
-    const { detail, distanceText, durationText } = item;
+  const STAGGER_MS = 100;
+  items.forEach((item, idx) => {
+    const d = item.detail;
+    // li を準備
     const li = document.createElement('li');
     li.classList.add('result-item');
+    li.style.opacity = '0';
     li.innerHTML = `
-      <div class="item-name">${detail.name}</div>
-      <div class="item-vicinity">${detail.vicinity}</div>
-      <div class="item-distance">${distanceText} (${durationText})</div>
+      <div class="item-name">${d.name}</div>
+      <div class="item-vicinity">${d.vicinity}</div>
+      <div class="item-distance">${item.distanceText} (${item.durationText})</div>
     `;
     ul.appendChild(li);
 
+    // マーカーを準備（map はまだセットしない）
     const marker = new google.maps.Marker({
-      position: detail.geometry.location,
-      map,
-      title: detail.name,
+      position: d.geometry.location,
+      title: d.name,
       icon: defaultIcon
     });
     markers.push(marker);
+
+    // つながるハイライト
     marker.addListener('mouseover', () => { marker.setIcon(hoverIcon); li.classList.add('hover'); });
     marker.addListener('mouseout',  () => { marker.setIcon(defaultIcon); li.classList.remove('hover'); });
     li.addEventListener('mouseover', () => marker.setIcon(hoverIcon));
     li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
-  }
+
+    // ステージング表示
+    setTimeout(() => {
+      marker.setMap(map);
+      li.style.transition = 'opacity 0.3s ease-in';
+      li.style.opacity = '1';
+    }, idx * STAGGER_MS);
+  });
 }

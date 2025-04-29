@@ -7,38 +7,38 @@ body {
 
 /* マップ */
 #map {
-  position: sticky;   /* スクロールしても上部に貼り付き */
-  top: 0;             /* ビューポートの上端に */
-  z-index: 1000;      /* 他要素の上に出す */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   width: 100%;
   height: 400px;
   margin-bottom: 1rem;
 }
 
-/* リスト全体はグリッド解除して普通の縦リストに */
+/* リスト全体は縦リストに */
 #results {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+/* 各アイテム */
 .result-item {
-    display: grid;
-    /* カラム幅はお好みで調整してください */
-    grid-template-columns: 2fr 3fr 2fr;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    margin: 0 10pt;
-    border-bottom: 1px solid #e0e0e0;
-    cursor: pointer;
-    gap: 0.5rem; /* カラム間の余白 */
-  }
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  margin: 0 10pt;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  gap: 0.5rem;
+  opacity: 0; /* 初期は非表示 */
+}
 
 /* 店名 */
 .result-item .item-name {
   font-weight: 500;
   color: #2a4f9c;
-  /* 長い店名の折り返しを有効化 */
   white-space: normal;
   overflow-wrap: break-word;
 }
@@ -59,79 +59,57 @@ body {
   white-space: nowrap;
 }
 
-/* 店名リンクは左側に伸ばす */
-.result-item a {
-  flex: 1;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #2a4f9c;
-  text-decoration: none;
-}
-
-/* メタ情報（住所・距離・時間・要確認）は右寄せ */
-.result-item .meta {
-  font-size: 0.875rem;
-  color: #666;
-  margin-left: 1rem;
-  white-space: nowrap;
-}
-
 .result-item:hover,
 .result-item.hover {
-  background-color: #f0f8ff;    /* 背景色で強調 */
-  transform: translateY(-2px);  /* 少しだけ浮かせる */
+  background-color: #f0f8ff;
+  transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 
-/* 1) 検索バー全体をセンタリング */
+/* 検索バー */
 #controls {
-  display: flex;                      /* Flexbox レイアウト */  
-  justify-content: center;            /* 中央寄せ */  
-  margin: 1rem 0;                     /* 上下に余白 */   
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
 }
 
-/* 2) 入力フィールドを大きく */
 #location-input {
-  width: 80%;                         /* 幅を80%に設定 */  
-  max-width: 600px;                   /* 最大幅600px */   
-  font-size: 1.2rem;                  /* フォントを少し大きく */   
-  padding: 0.8rem 1rem;               /* 内側余白を拡大 */   
-  border: 2px solid #23408C;          /* Animotethics のダークブルー系 */  
-  border-radius: 8px 0 0 8px;         /* 左側のみ丸く */   
-  background-color: #f3f3f9;          /* 淡いグレー背景 */  
-  color: #333;                        /* テキスト色 */   
+  width: 80%;
+  max-width: 600px;
+  font-size: 1.2rem;
+  padding: 0.8rem 1rem;
+  border: 2px solid #23408C;
+  border-radius: 8px 0 0 8px;
+  background-color: #f3f3f9;
+  color: #333;
 }
 
-/* 3) 検索ボタンを大きく＆統一感ある色に */
 #search-btn {
-  font-size: 1.2rem;                  /* フォントサイズ */   
-  padding: 0.8rem 1.2rem;             /* 内側余白 */  
-  border: 2px solid #23408C;          /* ボーダー色合わせ */  
-  border-left: none;                  /* 左側の二重ボーダーを消す */  
-  border-radius: 0 8px 8px 0;         /* 右側のみ丸く */   
-  background-color: #23408C;          /* ボタン背景色 */  
-  color: #fff;                        /* テキストを白に */   
-  cursor: pointer;                    /* ホバー時に指アイコン */  
+  font-size: 1.2rem;
+  padding: 0.8rem 1.2rem;
+  border: 2px solid #23408C;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  background-color: #23408C;
+  color: #fff;
+  cursor: pointer;
 }
 
-/* 4) ホバーで浮かび上がる影を追加 */
 #search-btn:hover,
 #location-input:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* ほんのり大きめの影 */   
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* 5) フォーカス時のアクセント色 */
 #location-input:focus {
-  outline: none;                     
-  border-color: #77B8D1;              /* Animotethics のライトブルー系 */  
-  box-shadow: 0 0 0 3px rgba(119,184,209,0.3);  
+  outline: none;
+  border-color: #77B8D1;
+  box-shadow: 0 0 0 3px rgba(119,184,209,0.3);
 }
 
-
-/* 注記を小さく目立たせすぎずに表示 */
+/* 注記 */
 .note {
-  font-size: 0.875rem;    /* 見出しより一段小さめ */
-  color: #666;            /* 薄めのグレーで主張を抑える */
-  margin: 0 0 1rem;       /* 下にちょっと余白 */
-  line-height: 1.4;       /* 読みやすい行間 */
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0 0 1rem;
+  line-height: 1.4;
 }
