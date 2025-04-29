@@ -120,7 +120,7 @@ async function multiKeywordSearch(loc, keywords) {
     li.style.opacity = '0';
 
     // Google Maps リンク生成
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${d.place_id}`;
+    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
     // li全体をクリック可能に
     li.style.cursor = 'pointer';
     li.addEventListener('click', () => {
@@ -141,9 +141,24 @@ async function multiKeywordSearch(loc, keywords) {
       icon: defaultIcon
     });
     markers.push(marker);
-    [ ['mouseover', hoverIcon], ['mouseout', defaultIcon] ].forEach(([evt,icon]) => {
-      marker.addListener(evt, () => marker.setIcon(icon));
-      li.addEventListener(evt, () => marker.setIcon(icon));
+ 
+    // ホバー時にリスト項目にも .hover を付け外し
+    marker.addListener('mouseover', () => {
+      marker.setIcon(hoverIcon);
+      li.classList.add('hover');
+    });
+    marker.addListener('mouseout', () => {
+      marker.setIcon(defaultIcon);
+      li.classList.remove('hover');
+    });
+    // リストにホバーしてもマーカーアイコンが変わる
+    li.addEventListener('mouseover', () => {
+      marker.setIcon(hoverIcon);
+      li.classList.add('hover');
+    });
+    li.addEventListener('mouseout', () => {
+      marker.setIcon(defaultIcon);
+      li.classList.remove('hover');
     });
 
     // 遅延して表示
