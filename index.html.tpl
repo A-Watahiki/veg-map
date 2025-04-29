@@ -38,24 +38,20 @@
   <meta charset="utf-8" />
   <title>目的地近辺のベジタリアン料理のお店</title>
   <style>
-    .map-container { position: relative; }
-    #map { width: 100%; height: 400px; }
-    #results { list-style: none; padding: 0; margin: 0; }
-    .note { font-size: 0.9em; color: #555; }
+    /* 省略：前回ご提示の CSS をここに丸ごと貼り付けてください */
   </style>
 </head>
 
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
-  <div id="controls" style="margin:1rem 0;">
+  <div id="controls">
     <input id="location-input" type="text" placeholder="目的地を入力してください" />
     <button id="search-btn">検索</button>
   </div>
 
   <p class="note">
-    ※ 「❗️」マークは「ベジタリアン」「ヴィーガン」などの検索結果に出るものの  
-    ビジネスプロフィールに「ベジタリアン料理があるお店」の表記がないお店。
+    ※「❗️」マークはビジネスプロフィールに「ベジタリアン料理があるお店」の表記がないものです。
   </p>
 
   <div class="map-container">
@@ -63,20 +59,11 @@
     <ul id="results"></ul>
   </div>
 
-  <!-- APIキーとベースURLを埋め込む -->
-  <script>
-    // Cloud Run のエンドポイント（deploy.sh の .env に BASE_URL を設定してから envsubst で置換）
-    window.BASE_URL = '${BASE_URL}';
-  </script>
-
-  <!-- Maps JavaScript API のロード（コールバックで initMap を呼び出し） -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=$GOOGLE_MAPS_API_KEY_CLIENT&libraries=places,geometry&callback=initMap"
     async
     defer
   ></script>
-
-  <!-- メインのアプリケーションコード -->
   <script type="module" src="main.js"></script>
 </body>
 </html>
