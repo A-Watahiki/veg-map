@@ -120,8 +120,7 @@ async function multiKeywordSearch(loc, keywords) {
     li.style.opacity = '0';
 
     // Google Maps リンク生成
-    const mapsUrl =
-      `https://www.google.com/maps/search/?api=1&query_place_id=${d.place_id}`;
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${d.place_id}`;
     // li全体をクリック可能に
     li.style.cursor = 'pointer';
     li.addEventListener('click', () => {
