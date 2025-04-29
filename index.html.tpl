@@ -10,12 +10,9 @@
       https://www.gstatic.com;
     connect-src
       'self'
+      https://veg-map-simple-*.run.app
       https://maps.googleapis.com
-      https://maps.gstatic.com
-      https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
-      https://verifyusername-ictqzxcg5a-an.a.run.app
-      https://searchplaces-ictqzxcg5a-an.a.run.app
-      https://veg-map-simple-mzwngqbnea-an.a.run.app;
+      https://maps.gstatic.com;
     img-src
       'self'
       data:
@@ -32,16 +29,58 @@
       https://fonts.gstatic.com;
     frame-src
       'self'
-      https://*.firebaseapp.com
       https://apis.google.com;
   ">
   <meta charset="utf-8" />
   <title>目的地近辺のベジタリアン料理のお店</title>
   <style>
-    /* 省略：前回ご提示の CSS をここに丸ごと貼り付けてください */
+    body { font-family: sans-serif; margin: 0; padding: 1rem; }
+    #map {
+      position: sticky; top: 0; z-index: 1000;
+      width: 100%; height: 400px; margin-bottom: 1rem;
+    }
+    #controls {
+      display: flex; justify-content: center; margin: 1rem 0;
+    }
+    #location-input {
+      width: 80%; max-width: 600px; font-size: 1.2rem;
+      padding: 0.8rem 1rem; border: 2px solid #23408C;
+      border-radius: 8px 0 0 8px; background: #f3f3f9; color: #333;
+    }
+    #search-btn {
+      font-size: 1.2rem; padding: 0.8rem 1.2rem;
+      border: 2px solid #23408C; border-left: none;
+      border-radius: 0 8px 8px 0; background: #23408C; color: #fff;
+      cursor: pointer;
+    }
+    #search-btn:hover, #location-input:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #location-input:focus {
+      outline: none;
+      border-color: #77B8D1;
+      box-shadow: 0 0 0 3px rgba(119,184,209,0.3);
+    }
+    .note {
+      font-size: 0.875rem; color: #666; margin: 0 0 1rem; line-height: 1.4;
+    }
+    #results { list-style: none; margin: 0; padding: 0; }
+    .result-item {
+      display: grid; grid-template-columns: 2fr 3fr 2fr;
+      align-items: center; padding: 0.5rem 1rem; margin: 0 10pt;
+      border-bottom: 1px solid #e0e0e0; cursor: pointer; gap: 0.5rem;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .result-item .item-name { font-weight: 500; color: #2a4f9c; }
+    .result-item .item-vicinity,
+    .result-item .item-distance { font-size: 0.875rem; color: #444; }
+    .result-item .item-distance { text-align: right; white-space: nowrap; }
+    .result-item:hover, .result-item.hover {
+      background: #f0f8ff; transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    }
   </style>
 </head>
-
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
@@ -51,19 +90,20 @@
   </div>
 
   <p class="note">
-    ※「❗️」マークはビジネスプロフィールに「ベジタリアン料理があるお店」の表記がないものです。
+    ※ 「❗️」はビジネスプロフィールに「ベジタリアン料理がある」とは記載のないお店です。
   </p>
 
-  <div class="map-container">
-    <div id="map"></div>
-    <ul id="results"></ul>
-  </div>
+  <div id="map"></div>
+  <ul id="results"></ul>
 
+  <!-- Google Maps JS API をコールバック付きで１回だけ読み込む -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=$GOOGLE_MAPS_API_KEY_CLIENT&libraries=places,geometry&callback=initMap"
     async
-    defer
-  ></script>
-  <script type="module" src="main.js"></script>
+    defer>
+  </script>
+
+  <!-- アプリ本体 -->
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
