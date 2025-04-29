@@ -1,4 +1,4 @@
-// main.js (新版 Places API v1 + Text Search 対応版)
+// main.js (PlacesService Text Search 実装版)
 console.log('🟢 main.js 実行開始');
 
 import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
@@ -15,9 +15,9 @@ function initMap() {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-  autocomplete = new google.maps.places.Autocomplete(
-    document.getElementById('location-input')
-  );
+  autocomplete = new google.maps.places.PlaceAutocompleteElement({
+    element: document.getElementById('location-input')
+  });
   autocomplete.bindTo('bounds', map);
 }
 window.initMap = initMap;
@@ -60,29 +60,32 @@ async function onSearch() {
   );
 }
 
-// 4) multiKeywordSearch (Text Search → 詳細取得 → 距離計算 → 描画)
+// 4) multiKeywordSearch
 async function multiKeywordSearch(loc, keywords) {
-  // 4-1) Text Searchによる placeId の収集
-  const { Place } = await google.maps.importLibrary('places');
+  // 4-1) Text Search via PlacesService
+  const service = new google.maps.places.PlacesService(map);
   const placeIds = new Set();
   for (const keyword of keywords) {
     const request = {
       query: keyword,
-      locationRestriction: { center: new google.maps.LatLng(loc.lat, loc.lng), radius: 1500 },
-      type: 'restaurant',
-      fields: ['placeId']
+      location: new google.maps.LatLng(loc.lat, loc.lng),
+      radius: 1500,
+      type: 'restaurant'
     };
-    // @ts-ignore
-    const { places } = await Place.textSearch(request);
-    places.forEach(p => placeIds.add(p.placeId));
+    const results = await new Promise(resolve => {
+      service.textSearch(request, (places, status) => {
+        resolve(status === google.maps.places.PlacesServiceStatus.OK ? places : []);
+      });
+    });
+    results.forEach(p => placeIds.add(p.place_id || p.placeId));
   }
   const rawPlaces = Array.from(placeIds).map(id => ({ place_id: id }));
 
   // 4-2) 詳細取得
-  const service = new google.maps.places.PlacesService(map);
+  const detailService = new google.maps.places.PlacesService(map);
   const details = (await Promise.all(
     rawPlaces.map(p => new Promise(resolve => {
-      service.getDetails(
+      detailService.getDetails(
         { placeId: p.place_id, fields: ['name','vicinity','geometry','place_id'] },
         (detail, status) => resolve(status === google.maps.places.PlacesServiceStatus.OK ? detail : null)
       );
@@ -103,16 +106,9 @@ async function multiKeywordSearch(loc, keywords) {
   if (dm.status === google.maps.DistanceMatrixStatus.OK) {
     items = details.map((d, i) => {
       const el = dm.res.rows[0].elements[i];
-      return {
-        detail: d,
-        distanceValue: el.distance.value,
-        distanceText: el.distance.text,
-        durationValue: el.duration.value,
-        durationText: el.duration.text
-      };
-    })
-    .filter(item => item.distanceValue <= 1500)
-    .sort((a, b) => a.durationValue - b.durationValue);
+      return { detail: d, distanceValue: el.distance.value, distanceText: el.distance.text, durationValue: el.duration.value, durationText: el.duration.text };
+    }).filter(item => item.distanceValue <= 1500)
+      .sort((a, b) => a.durationValue - b.durationValue);
   }
 
   // 4-4) 描画
@@ -123,13 +119,11 @@ async function multiKeywordSearch(loc, keywords) {
 
   for (const item of items) {
     const d = item.detail;
-    // フラグ取得
     let vegFlag = false, veganFlag = false;
     try { vegFlag   = (await getVegetarianFlagFn(d.place_id)).serves_vegetarian_food; } catch (e) { console.warn(e); }
     try { veganFlag = (await getVeganFlagFn(d.place_id)).serves_vegan_food;       } catch (e) { console.warn(e); }
     const prefix = veganFlag ? '❤️ ' : vegFlag ? '💚 ' : '';
 
-    // リスト
     const li = document.createElement('li'); li.classList.add('result-item');
     li.innerHTML = `
       <div class="item-name">${prefix}${d.name}</div>
@@ -138,7 +132,6 @@ async function multiKeywordSearch(loc, keywords) {
     `;
     ul.appendChild(li);
 
-    // マーカー
     const marker = new google.maps.Marker({ position: d.geometry.location, map, title: d.name, icon: defaultIcon });
     markers.push(marker);
     marker.addListener('mouseover', () => { marker.setIcon(hoverIcon); li.classList.add('hover'); });
