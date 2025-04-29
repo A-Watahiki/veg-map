@@ -3,7 +3,7 @@ console.log('🟢 main.js 実行開始');
 
 let map, autocomplete, selectedPlace;
 const markers = [];
-const STAGGER_MS = 100;
+const STAGGER_MS = 200;
 
 // 1) initMap（HTML の callback=initMap で呼ばれる）
 export function initMap() {
@@ -108,7 +108,7 @@ async function multiKeywordSearch(loc, keywords) {
     scaledSize: new google.maps.Size(32,32)
   };
   const hoverIcon = {
-    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
     scaledSize: new google.maps.Size(48,48)
   };
 
