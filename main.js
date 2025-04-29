@@ -1,7 +1,7 @@
 // main.js (レガシーモード + Autocomplete ＋ Geometry 版)
 console.log('🟢 main.js 実行開始');
 
-import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
+import { getBrowserApiKey } from './firebase-init.js';
 
 let map;
 let autocomplete;
@@ -126,19 +126,25 @@ async function multiKeywordSearch(loc, keywords) {
   console.log(`Final items=${items.length}`);
 
   // 4-4) 描画
-  markers.forEach(m => m.setMap(null)); markers.length = 0;
-  const ul = document.getElementById('results'); ul.innerHTML = '';
-  const defaultIcon = { url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(32, 32) };
-  const hoverIcon   = { url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png', scaledSize: new google.maps.Size(48, 48) };
+  markers.forEach(m => m.setMap(null));
+  markers.length = 0;
+  const ul = document.getElementById('results');
+  ul.innerHTML = '';
+  const defaultIcon = {
+    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    scaledSize: new google.maps.Size(32, 32)
+  };
+  const hoverIcon = {
+    url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    scaledSize: new google.maps.Size(48, 48)
+  };
 
   for (const item of items) {
     const d = item.detail;
-    let vegFlag = false, veganFlag = false;
-    try { vegFlag   = (await getVegetarianFlagFn(d.place_id)).serves_vegetarian_food; } catch (e) { console.warn(e); }
-    try { veganFlag = (await getVeganFlagFn(d.place_id)).serves_vegan_food;       } catch (e) { console.warn(e); }
-    const prefix = veganFlag ? '❤️ ' : vegFlag ? '💚 ' : '';
+    const prefix = '';  // フラグ非表示
 
-    const li = document.createElement('li'); li.classList.add('result-item');
+    const li = document.createElement('li');
+    li.classList.add('result-item');
     li.innerHTML = `
       <div class="item-name">${prefix}${d.name}</div>
       <div class="item-vicinity">${d.vicinity}</div>
@@ -146,11 +152,22 @@ async function multiKeywordSearch(loc, keywords) {
     `;
     ul.appendChild(li);
 
-    const marker = new google.maps.Marker({ position: d.geometry.location, map, title: d.name, icon: defaultIcon });
+    const marker = new google.maps.Marker({
+      position: d.geometry.location,
+      map,
+      title: d.name,
+      icon: defaultIcon
+    });
     markers.push(marker);
-    marker.addListener('mouseover', () => { marker.setIcon(hoverIcon); li.classList.add('hover'); });
-    marker.addListener('mouseout',  () => { marker.setIcon(defaultIcon); li.classList.remove('hover'); });
+    marker.addListener('mouseover', () => {
+      marker.setIcon(hoverIcon);
+      li.classList.add('hover');
+    });
+    marker.addListener('mouseout', () => {
+      marker.setIcon(defaultIcon);
+      li.classList.remove('hover');
+    });
     li.addEventListener('mouseover', () => marker.setIcon(hoverIcon));
-    li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
+    li.addEventListener('mouseout', () => marker.setIcon(defaultIcon));
   }
 }
