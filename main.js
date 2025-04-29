@@ -3,7 +3,18 @@ console.log('🟢 main.js 実行開始');
 
 let map, autocomplete, selectedPlace;
 const markers = [];
+let searchMarker = null;     // ← 追加
 const STAGGER_MS = 200;
+
+// ネイビー色シンボル定義
+const searchIcon = {
+  path: google.maps.SymbolPath.CIRCLE,
+  fillColor: '#000080',
+  fillOpacity: 1,
+  strokeColor: '#ffffff',
+  strokeWeight: 2,
+  scale: 8
+};
 
 // 1) initMap（HTML の callback=initMap で呼ばれる）
 export function initMap() {
@@ -33,7 +44,18 @@ async function onSearch() {
     alert('候補から選択してください');
     return;
   }
-  map.setCenter(selectedPlace.geometry.location);
+  // 地図中心を移動
+  const loc = selectedPlace.geometry.location;
+  map.setCenter(loc);
+
+  // ← 検索地点マーカーをクリアして再作成
+  if (searchMarker) searchMarker.setMap(null);
+  searchMarker = new google.maps.Marker({
+    position: loc,
+    map,
+    icon: searchIcon,
+    title: selectedPlace.name || '検索地点'
+  });
   await multiKeywordSearch(
     {
       lat: selectedPlace.geometry.location.lat(),
