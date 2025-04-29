@@ -1,4 +1,4 @@
-// main.js (PlaceAutocompleteElement 正式対応版)
+// main.js (レガシーモード + Autocomplete に戻し)
 console.log('🟢 main.js 実行開始');
 
 import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
@@ -10,27 +10,23 @@ const BROWSER_API_KEY = getBrowserApiKey();
 let mapsLoaded = false;
 const markers = [];
 
-// 1) initMap をグローバル登録 (モジュール版)
-async function initMap() {
+// 1) initMap をグローバル登録
+function initMap() {
   console.log('▶️ initMap called');
-  // maps ライブラリを動的インポート
-  const { Map } = await google.maps.importLibrary('maps');
-  map = new Map(document.getElementById('map'), {
+  // Google Maps オブジェクト生成
+  map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-  // places ライブラリを動的インポートしてオートコンプリート要素を生成
-  const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
-  const acElem = new PlaceAutocompleteElement();
-  const container = document.getElementById('location-input');
-  container.innerHTML = '';
-  container.appendChild(acElem);
-  autocomplete = acElem;
-  acElem.addEventListener('gmp-select', async (e) => {
-    const prediction = e.detail.placePrediction;
-    const place = prediction.toPlace();
-    await place.fetchFields({ fields: ['geometry'] });
-    selectedPlace = place;
+  // 従来の Autocomplete を使用
+  const input = document.getElementById('location-input');
+  autocomplete = new google.maps.places.Autocomplete(input);
+  autocomplete.bindTo('bounds', map);
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (place.geometry) {
+      selectedPlace = place;
+    }
   });
 }
 window.initMap = initMap;
@@ -40,7 +36,7 @@ function loadGoogleMaps() {
   return new Promise((resolve, reject) => {
     if (mapsLoaded) return resolve();
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_API_KEY}&libraries=places,marker,geometry&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_API_KEY}&libraries=places,geometry`;
     script.async = true;
     script.defer = true;
     script.onload = () => { mapsLoaded = true; initMap(); resolve(); };
@@ -152,3 +148,7 @@ async function multiKeywordSearch(loc, keywords) {
     li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
   }
 }
+
+// 必要な API:
+// - Maps JavaScript API（libraries=places,geometry）
+// - サーバー側: Places API（Web Service）
