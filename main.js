@@ -105,11 +105,11 @@ async function multiKeywordSearch(loc, keywords) {
 
   const defaultIcon = {
     url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-    scaledSize: new google.maps.Size(32,32)
+    scaledSize: new google.maps.Size(32, 32)
   };
   const hoverIcon = {
     url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-    scaledSize: new google.maps.Size(48,48)
+    scaledSize: new google.maps.Size(48, 48)
   };
 
   items.forEach((item, idx) => {
