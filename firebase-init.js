@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase-admin/app'; // モジュール版に変更
+import { initializeApp } from '/firebase-admin/app'; // モジュール版に変更
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
