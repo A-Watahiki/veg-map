@@ -1,6 +1,6 @@
 import { initializeApp } from '/firebase-admin/app'; // モジュール版に変更
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from '/firebase-admin/auth';
+import { getFirestore } from '/firebase-admin/firestore';
 
 const firebaseConfig = { // 使われていないが、残しておく
   apiKey: 'AIzaSyDa-5ULVWt44aHOKFui6y4bn-tKCJk4xQY',
