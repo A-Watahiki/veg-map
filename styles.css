@@ -15,28 +15,36 @@ body {
   margin-bottom: 1rem;
 }
 
-/* リスト全体は縦リストに */
+/* リスト全体 */
 #results {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* 各アイテム */
+/* li はただの wrapper */
 .result-item {
+  margin: 0 10pt;
+}
+
+/* リスト中のリンクをグリッド化 */
+.result-item .result-link {
   display: grid;
   grid-template-columns: 2fr 3fr 2fr;
   align-items: center;
   padding: 0.5rem 1rem;
-  margin: 0 10pt;
-  border-bottom: 1px solid #e0e0e0;
-  cursor: pointer;
   gap: 0.5rem;
-  opacity: 0; /* 初期は非表示 */
+  border-bottom: 1px solid #e0e0e0;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  opacity: 0;               /* 初期は透明、JS でフェードIN */
+  box-sizing: border-box;   /* パディング込みで幅を計算 */
 }
 
 /* 店名 */
-.result-item .item-name {
+.result-link .item-name {
   font-weight: 500;
   color: #2a4f9c;
   white-space: normal;
@@ -44,7 +52,7 @@ body {
 }
 
 /* 住所 */
-.result-item .item-vicinity {
+.result-link .item-vicinity {
   font-size: 0.875rem;
   color: #444;
   white-space: normal;
@@ -52,28 +60,19 @@ body {
 }
 
 /* 距離＆時間 */
-.result-item .item-distance {
+.result-link .item-distance {
   font-size: 0.875rem;
   color: #666;
   text-align: right;
   white-space: nowrap;
 }
 
-.result-item .result-link {
-  display: grid;
-  grid-template-columns: 2fr 3fr 2fr;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: inherit;
-  width: 100%;
-  height: 100%;
-}
-
-.result-item:hover,
-.result-item.hover {
+/* ホバーで強調 */
+.result-link:hover,
+.result-item.hover .result-link {
   background-color: #f0f8ff;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
 }
 
 /* 検索バー */
