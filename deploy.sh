@@ -26,11 +26,6 @@ SERVICE_NAME="veg-map-simple"
 REGION="asia-northeast1"
 IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
-# 4) index.html をテンプレートから生成
-#    index.html.tpl 内の ${GOOGLE_MAPS_API_KEY_CLIENT} を置き換える
-envsubst '$GOOGLE_MAPS_API_KEY_CLIENT' < index.html.tpl > index.html
-
-
 # 5) Docker イメージビルド（amd64 指定）
 docker build --platform=linux/amd64 -t "${IMAGE}" .
 
