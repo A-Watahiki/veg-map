@@ -10,24 +10,25 @@ const BROWSER_API_KEY = getBrowserApiKey();
 let mapsLoaded = false;
 const markers = [];
 
-// 1) initMap をグローバル登録
-function initMap() {
+// 1) initMap をグローバル登録 (モジュール版)
+async function initMap() {
   console.log('▶️ initMap called');
-  map = new google.maps.Map(document.getElementById('map'), {
+  // maps ライブラリを動的インポート
+  const { Map } = await google.maps.importLibrary('maps');
+  map = new Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-  // PlaceAutocompleteElement インスタンス化
-  const acElem = new google.maps.places.PlaceAutocompleteElement();
+  // places ライブラリを動的インポートしてオートコンプリート要素を生成
+  const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
+  const acElem = new PlaceAutocompleteElement();
   const container = document.getElementById('location-input');
-  container.innerHTML = ''; // 既存の input を置き換え
+  container.innerHTML = '';
   container.appendChild(acElem);
   autocomplete = acElem;
-  // 選択時イベント
   acElem.addEventListener('gmp-select', async (e) => {
     const prediction = e.detail.placePrediction;
     const place = prediction.toPlace();
-    // geometry を取得
     await place.fetchFields({ fields: ['geometry'] });
     selectedPlace = place;
   });
@@ -151,7 +152,3 @@ async function multiKeywordSearch(loc, keywords) {
     li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
   }
 }
-
-// 必要な API:
-// - Maps JavaScript API（libraries=places,marker,geometry）
-// - サーバー側: Places API（Web Service）
