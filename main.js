@@ -114,14 +114,13 @@ async function multiKeywordSearch(loc, keywords) {
 
   items.forEach((item, idx) => {
     const d = item.detail;
-    // li要素作成
     const li = document.createElement('li');
     li.className = 'result-item';
     li.style.opacity = '0';
 
-    // Google Maps リンク生成
-    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
-    // li の中身を <a> でくるむ
+    // Google Maps の公式クエリ形式に
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${d.place_id}`;
+
     li.innerHTML = `
       <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="result-link">
         <div class="item-name">${d.name}</div>
@@ -131,15 +130,14 @@ async function multiKeywordSearch(loc, keywords) {
     `;
     ul.appendChild(li);
 
-    // marker
     const marker = new google.maps.Marker({
       position: d.geometry.location,
       title: d.name,
       icon: defaultIcon
     });
     markers.push(marker);
- 
-    // ホバー時にリスト項目にも .hover を付け外し
+
+    // マーカー⇄リストのホバー同期
     marker.addListener('mouseover', () => {
       marker.setIcon(hoverIcon);
       li.classList.add('hover');
@@ -148,7 +146,6 @@ async function multiKeywordSearch(loc, keywords) {
       marker.setIcon(defaultIcon);
       li.classList.remove('hover');
     });
-    // リストにホバーしてもマーカーアイコンが変わる
     li.addEventListener('mouseover', () => {
       marker.setIcon(hoverIcon);
       li.classList.add('hover');
