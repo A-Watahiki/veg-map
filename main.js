@@ -1,4 +1,4 @@
-// main.js (レガシーモード + Autocomplete に戻し)
+// main.js (レガシーモード + Autocomplete ＋ Geometry 版)
 console.log('🟢 main.js 実行開始');
 
 import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
@@ -13,12 +13,10 @@ const markers = [];
 // 1) initMap をグローバル登録
 function initMap() {
   console.log('▶️ initMap called');
-  // Google Maps オブジェクト生成
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-  // 従来の Autocomplete を使用
   const input = document.getElementById('location-input');
   autocomplete = new google.maps.places.Autocomplete(input);
   autocomplete.bindTo('bounds', map);
@@ -68,13 +66,12 @@ async function onSearch() {
   );
 }
 
-// 4) multiKeywordSearch (Text Search → 詳細取得 → 距離計算 → 描画)
+// 4) multiKeywordSearch
 async function multiKeywordSearch(loc, keywords) {
   // 4-1) Text Search via PlacesService
   const service = new google.maps.places.PlacesService(map);
   const placeIds = new Set();
   for (const keyword of keywords) {
-    // キーワードに "restaurant" を追加してレストランに絞り込む
     const queryString = `${keyword} restaurant`;
     const request = {
       query: queryString,
@@ -83,7 +80,6 @@ async function multiKeywordSearch(loc, keywords) {
     };
     const results = await new Promise(resolve => {
       service.textSearch(request, (places, status) => {
-        // INVALID_REQUEST の場合、フィルタ条件を外して再試行
         if (status === google.maps.places.PlacesServiceStatus.INVALID_REQUEST) {
           service.textSearch({ query: queryString }, (p2, s2) => {
             resolve(s2 === google.maps.places.PlacesServiceStatus.OK ? p2 : []);
@@ -110,24 +106,23 @@ async function multiKeywordSearch(loc, keywords) {
   )).filter(d => d);
   console.log(`Details fetched=${details.length}`);
 
-  // 4-3) Distance Matrix + フィルタ＆ソート
-  const distanceService = new google.maps.DistanceMatrixService();
-  const origins = [new google.maps.LatLng(loc.lat, loc.lng)];
-  const destinations = details.map(d => d.geometry.location);
-  const dm = await new Promise(resolve => {
-    distanceService.getDistanceMatrix(
-      { origins, destinations, travelMode: 'WALKING', unitSystem: google.maps.UnitSystem.METRIC },
-      (res, status) => resolve({ res, status })
-    );
-  });
-  let items = [];
-  if (dm.status === google.maps.DistanceMatrixStatus.OK) {
-    items = details.map((d, i) => {
-      const el = dm.res.rows[0].elements[i];
-      return { detail: d, distanceValue: el.distance.value, distanceText: el.distance.text, durationValue: el.duration.value, durationText: el.duration.text };
-    }).filter(item => item.distanceValue <= 1500)
-      .sort((a, b) => a.durationValue - b.durationValue);
-  }
+  // 4-3) Geometry で直線距離＆擬似所要時間計算
+  const origin = new google.maps.LatLng(loc.lat, loc.lng);
+  const items = details
+    .map(d => {
+      const dist = google.maps.geometry.spherical.computeDistanceBetween(origin, d.geometry.location); // m
+      const walkSpeed = 1.4; // m/s (約5km/h)
+      const durationSec = dist / walkSpeed;
+      return {
+        detail: d,
+        distanceValue: dist,
+        distanceText: `${Math.round(dist)} m`,
+        durationValue: durationSec,
+        durationText: `${Math.round(durationSec/60)}分`
+      };
+    })
+    .filter(item => item.distanceValue <= 1500)
+    .sort((a, b) => a.distanceValue - b.distanceValue);
   console.log(`Final items=${items.length}`);
 
   // 4-4) 描画
@@ -159,9 +154,3 @@ async function multiKeywordSearch(loc, keywords) {
     li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
   }
 }
-
-// 必要な API:
-// - Maps JavaScript API（libraries=places,geometry）
-// - サーバー側: Places API（Web Service）
-// - Maps JavaScript API（libraries=places,geometry）
-// - サーバー側: Places API（Web Service）
