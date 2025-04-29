@@ -1,5 +1,6 @@
-// index.js (Express サーバー直起動版)
+// index.js (Express サーバー直起動版、CommonJS + CORS ミドルウェア)
 const express = require('express');
+const cors = require('cors');
 const admin = require('firebase-admin');
 const fetch = require('node-fetch');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -14,18 +15,16 @@ const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 // Express アプリ生成
 const app = express();
+
+// CORS ミドルウェア設定（全 origin 許可）
+app.use(cors({
+  origin: '*',
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
+
+// JSON ボディパーサー
 app.use(express.json());
-// CORS 設定
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
-  }
-  next();
-});
 
 // ヘルスチェック
 app.get('/', (req, res) => res.status(200).send('OK'));
@@ -36,21 +35,26 @@ app.get('/vegetarianFlag', async (req, res) => {
   if (!placeId) return res.status(400).json({ error: 'Missing place_id' });
   try {
     const doc = await vegDb.collection('vegetarianFlags').doc(placeId).get();
-    if (doc.exists) return res.json({ serves_vegetarian_food: doc.data().flag });
-  } catch (e) { console.warn(e); }
+    if (doc.exists) {
+      return res.json({ serves_vegetarian_food: doc.data().flag });
+    }
+  } catch (e) {
+    console.warn(e);
+  }
   try {
-    const url = new URL('https://maps.googleapis.com/maps/api/place/v1/details:lookup');
+    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
     url.searchParams.set('place_id', placeId);
-    url.searchParams.set('fields', 'servesVegetarianFood');
+    url.searchParams.set('fields', 'serves_vegetarian_food');
     url.searchParams.set('key', API_KEY);
     const response = await fetch(url);
     const data = await response.json();
-    if (data.status !== 'OK') return res.status(500).json({ error: data.status });
-    const flag = data.result.servesVegetarianFood;
+    if (data.status !== 'OK') {
+      return res.status(500).json({ error: data.status, message: data.error_message });
+    }
+    const flag = data.result.serves_vegetarian_food;
     if (typeof flag === 'boolean') {
-      vegDb.collection('vegetarianFlags').doc(placeId)
-        .set({ flag, updated: FieldValue.serverTimestamp() })
-        .catch(e => console.error(e));
+      await vegDb.collection('vegetarianFlags').doc(placeId)
+        .set({ flag, updated: FieldValue.serverTimestamp() });
     }
     return res.json({ serves_vegetarian_food: flag });
   } catch (e) {
@@ -65,21 +69,26 @@ app.get('/veganFlag', async (req, res) => {
   if (!placeId) return res.status(400).json({ error: 'Missing place_id' });
   try {
     const doc = await vegDb.collection('veganFlags').doc(placeId).get();
-    if (doc.exists) return res.json({ serves_vegan_food: doc.data().flag });
-  } catch (e) { console.warn(e); }
+    if (doc.exists) {
+      return res.json({ serves_vegan_food: doc.data().flag });
+    }
+  } catch (e) {
+    console.warn(e);
+  }
   try {
-    const url = new URL('https://maps.googleapis.com/maps/api/place/v1/details:lookup');
+    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
     url.searchParams.set('place_id', placeId);
-    url.searchParams.set('fields', 'servesVeganFood');
+    url.searchParams.set('fields', 'serves_vegan_food');
     url.searchParams.set('key', API_KEY);
     const response = await fetch(url);
     const data = await response.json();
-    if (data.status !== 'OK') return res.status(500).json({ error: data.status });
-    const flag = data.result.servesVeganFood;
+    if (data.status !== 'OK') {
+      return res.status(500).json({ error: data.status, message: data.error_message });
+    }
+    const flag = data.result.serves_vegan_food;
     if (typeof flag === 'boolean') {
-      vegDb.collection('veganFlags').doc(placeId)
-        .set({ flag, updated: FieldValue.serverTimestamp() })
-        .catch(e => console.error(e));
+      await vegDb.collection('veganFlags').doc(placeId)
+        .set({ flag, updated: FieldValue.serverTimestamp() });
     }
     return res.json({ serves_vegan_food: flag });
   } catch (e) {
@@ -88,20 +97,19 @@ app.get('/veganFlag', async (req, res) => {
   }
 });
 
-// searchPlaces エンドポイント
+// searchPlaces エンドポイント (Nearby Search)
 app.post('/searchPlaces', async (req, res) => {
   const { location, keywords } = req.body;
   if (!location || !Array.isArray(keywords)) {
     return res.status(400).json({ error: 'location と keywords が必要です' });
   }
   try {
-    let allResults = [];
+    const allResults = [];
     for (const keyword of keywords) {
       let pageToken = null;
       let pageCount = 0;
       do {
-        pageCount++;
-        const url = new URL('https://maps.googleapis.com/maps/api/place/v1/search:nearby');
+        const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
         url.searchParams.set('key', API_KEY);
         url.searchParams.set('location', `${location.lat},${location.lng}`);
         url.searchParams.set('radius', '1500');
@@ -110,10 +118,13 @@ app.post('/searchPlaces', async (req, res) => {
         if (pageToken) url.searchParams.set('pagetoken', pageToken);
         const response = await fetch(url);
         const json = await response.json();
-        if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') throw new Error(json.status);
-        allResults.push(...(json.places || json.results || []));
+        if (json.status !== 'OK' && json.status !== 'ZERO_RESULTS') {
+          throw new Error(json.status);
+        }
+        allResults.push(...(json.results || []));
         pageToken = json.next_page_token;
-        if (pageToken && pageCount < 3) await new Promise(r => setTimeout(r, 2000));
+        pageCount++;
+        if (pageToken && pageCount < 3) await new Promise(r => setTimeout(r, 3000));
       } while (pageToken && pageCount < 3);
     }
     const seen = new Set();
@@ -122,10 +133,10 @@ app.post('/searchPlaces', async (req, res) => {
       seen.add(p.place_id);
       return true;
     });
-    return res.json({ places: merged });
+    res.json({ places: merged });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message });
   }
 });
 
