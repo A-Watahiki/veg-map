@@ -16,40 +16,44 @@ body {
 }
 
 /* リスト全体 */
-#results {
+
+ /* リスト全体リセット */
+ #results {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+/* li はマージンだけ持つ */
 .result-item {
+  margin: 0 10pt;
+  list-style: none;
+  /* li 自体は透過スタート、フェードインだけ担当 */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* 実際のグリッドレイアウト＆背景・ホバーは a に集約 */
+.result-item .result-link {
   display: grid;
   grid-template-columns: 2fr 3fr 2fr;
   align-items: center;
-  padding: 0.5rem 1rem;
-  margin: 0 10pt;
-  border-bottom: 1px solid #e0e0e0;
-  cursor: pointer;
   gap: 0.5rem;
-  opacity: 0;                   /* JS でフェードイン */
-  transition: opacity 0.3s ease;
-  background: #fff;             /* 明示的に背景を白に */
-}
-
-.result-item .result-link {
-  display: block;               /* リンク全体をカバー */
-  width: 100%;
-  height: 100%;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fff;
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-/* ホバー強調は <li> 側で */
-.result-item:hover,
-.result-item.hover {
-  background-color: #f0f8ff;
+.result-item .result-link:hover,
+/* マーカー同期用に付与する .hover クラスも効かせる */
+.result-item.hover .result-link {
+  background: #f0f8ff;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
 }
 
 /* 店名 */
