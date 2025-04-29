@@ -83,24 +83,18 @@
 </head>
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
-
   <div id="controls">
     <input id="location-input" type="text" placeholder="目的地を入力してください" />
     <button id="search-btn">検索</button>
   </div>
-
-  <p class="note">
-    ※ 「❗️」はビジネスプロフィールに「ベジタリアン料理がある」とは記載のないお店です。
-  </p>
-
+  <p class="note">※ 「❗️」はビジネスプロフィールに「ベジタリアン料理がある」とは記載のないお店です。</p>
   <div id="map"></div>
   <ul id="results"></ul>
 
-  <!-- Google Maps JS API をコールバック付きで１回だけ読み込む -->
+  <!-- ← ここだけで一度だけ読み込む -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=$GOOGLE_MAPS_API_KEY_CLIENT&libraries=places,geometry&callback=initMap"
-    async
-    defer>
+    async defer>
   </script>
 
   <!-- アプリ本体 -->
