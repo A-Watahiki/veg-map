@@ -119,7 +119,8 @@ async function multiKeywordSearch(loc, keywords) {
     li.style.opacity = '0';
 
     // Google Maps の公式クエリ形式に
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${d.place_id}`;
+    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+
 
     li.innerHTML = `
       <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="result-link">
