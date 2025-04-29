@@ -114,17 +114,22 @@ async function multiKeywordSearch(loc, keywords) {
 
   items.forEach((item, idx) => {
     const d = item.detail;
-    // li
+    // li要素作成
     const li = document.createElement('li');
     li.className = 'result-item';
     li.style.opacity = '0';
 
-    // 店舗詳細へのリンク
-    const mapLink = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+    // Google Maps リンク生成
+    const mapsUrl =
+      `https://www.google.com/maps/search/?api=1&query_place_id=${d.place_id}`;
+    // li全体をクリック可能に
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', () => {
+      window.open(mapsUrl, '_blank', 'noopener');
+    });
+
     li.innerHTML = `
-      <a href="${mapLink}" target="_blank" rel="noopener" class="item-name">
-        ${d.name}
-      </a>
+      <div class="item-name">${d.name}</div>
       <div class="item-vicinity">${d.vicinity}</div>
       <div class="item-distance">${item.distanceText} (${item.durationText})</div>
     `;
