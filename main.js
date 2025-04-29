@@ -74,17 +74,26 @@ async function multiKeywordSearch(loc, keywords) {
   const service = new google.maps.places.PlacesService(map);
   const placeIds = new Set();
   for (const keyword of keywords) {
+    // キーワードに "restaurant" を追加してレストランに絞り込む
+    const queryString = `${keyword} restaurant`;
     const request = {
-      query: keyword,
+      query: queryString,
       location: new google.maps.LatLng(loc.lat, loc.lng),
-      radius: 1500,
-      type: 'restaurant'
+      radius: 1500
     };
     const results = await new Promise(resolve => {
       service.textSearch(request, (places, status) => {
-        resolve(status === google.maps.places.PlacesServiceStatus.OK ? places : []);
+        // INVALID_REQUEST の場合、フィルタ条件を外して再試行
+        if (status === google.maps.places.PlacesServiceStatus.INVALID_REQUEST) {
+          service.textSearch({ query: queryString }, (p2, s2) => {
+            resolve(s2 === google.maps.places.PlacesServiceStatus.OK ? p2 : []);
+          });
+        } else {
+          resolve(status === google.maps.places.PlacesServiceStatus.OK ? places : []);
+        }
       });
     });
+    console.log(`Keyword='${keyword}', results=${results.length}`);
     results.forEach(p => placeIds.add(p.place_id || p.placeId));
   }
   const rawPlaces = Array.from(placeIds).map(id => ({ place_id: id }));
@@ -99,6 +108,7 @@ async function multiKeywordSearch(loc, keywords) {
       );
     }))
   )).filter(d => d);
+  console.log(`Details fetched=${details.length}`);
 
   // 4-3) Distance Matrix + フィルタ＆ソート
   const distanceService = new google.maps.DistanceMatrixService();
@@ -118,6 +128,7 @@ async function multiKeywordSearch(loc, keywords) {
     }).filter(item => item.distanceValue <= 1500)
       .sort((a, b) => a.durationValue - b.durationValue);
   }
+  console.log(`Final items=${items.length}`);
 
   // 4-4) 描画
   markers.forEach(m => m.setMap(null)); markers.length = 0;
@@ -150,5 +161,7 @@ async function multiKeywordSearch(loc, keywords) {
 }
 
 // 必要な API:
+// - Maps JavaScript API（libraries=places,geometry）
+// - サーバー側: Places API（Web Service）
 // - Maps JavaScript API（libraries=places,geometry）
 // - サーバー側: Places API（Web Service）
