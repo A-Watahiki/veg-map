@@ -74,7 +74,7 @@
     async
     defer
     src="https://maps.googleapis.com/maps/api/js?\
-key=AIzaSyD9nZCDLaAdxlut2f4TIJScBhfsXjC57bA\
+key=${GOOGLE_MAPS_API_KEY_CLIENT}\
 &libraries=places,geometry\
 &callback=initMap">
   </script>

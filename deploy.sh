@@ -31,6 +31,10 @@ SERVICE_NAME="veg-map-simple"
 REGION="asia-northeast1"
 IMAGE="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
+
+# .env にある GOOGLE_MAPS_API_KEY_CLIENT を埋め込み
+envsubst '${GOOGLE_MAPS_API_KEY_CLIENT}' < index.html.tpl > index.html
+
 # ---- 4) Docker イメージビルド & プッシュ ----
 #Cloud Run（amd64）で動く単一アーキテクチャイメージを作成
 docker build --platform=linux/amd64 -t "${IMAGE}" .

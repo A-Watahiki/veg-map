@@ -1,12 +1,13 @@
 // main.js (レガシーモード + Autocomplete ＋ Geometry 版)
 console.log('🟢 main.js 実行開始');
 
-import { getBrowserApiKey } from './firebase-init.js';
+// ↓ firebase-init.js への依存を削除 ↓
+// import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
 
 let map;
 let autocomplete;
 let selectedPlace;
-const BROWSER_API_KEY = getBrowserApiKey();
+const BROWSER_API_KEY = window.BROWSER_API_KEY;  // HTML 側で定義済みのキーを参照
 let mapsLoaded = false;
 const markers = [];
 
@@ -68,7 +69,6 @@ async function onSearch() {
 
 // 4) multiKeywordSearch
 async function multiKeywordSearch(loc, keywords) {
-  // 4-1) Text Search via PlacesService
   const service = new google.maps.places.PlacesService(map);
   const placeIds = new Set();
   for (const keyword of keywords) {
@@ -110,8 +110,8 @@ async function multiKeywordSearch(loc, keywords) {
   const origin = new google.maps.LatLng(loc.lat, loc.lng);
   const items = details
     .map(d => {
-      const dist = google.maps.geometry.spherical.computeDistanceBetween(origin, d.geometry.location); // m
-      const walkSpeed = 1.4; // m/s (約5km/h)
+      const dist = google.maps.geometry.spherical.computeDistanceBetween(origin, d.geometry.location);
+      const walkSpeed = 1.4; // m/s
       const durationSec = dist / walkSpeed;
       return {
         detail: d,
@@ -141,12 +141,10 @@ async function multiKeywordSearch(loc, keywords) {
 
   for (const item of items) {
     const d = item.detail;
-    const prefix = '';  // フラグ非表示
-
     const li = document.createElement('li');
     li.classList.add('result-item');
     li.innerHTML = `
-      <div class="item-name">${prefix}${d.name}</div>
+      <div class="item-name">${d.name}</div>
       <div class="item-vicinity">${d.vicinity}</div>
       <div class="item-distance">${item.distanceText} (${item.durationText})</div>
     `;
