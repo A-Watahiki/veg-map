@@ -1,9 +1,11 @@
-// main.js (PlacesService Text Search 実装版)
+// main.js (PlaceAutocompleteElement 正式対応版)
 console.log('🟢 main.js 実行開始');
 
 import { getBrowserApiKey, getVegetarianFlagFn, getVeganFlagFn } from './firebase-init.js';
 
-let map, autocomplete;
+let map;
+let autocomplete;
+let selectedPlace;
 const BROWSER_API_KEY = getBrowserApiKey();
 let mapsLoaded = false;
 const markers = [];
@@ -15,10 +17,20 @@ function initMap() {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-  autocomplete = new google.maps.places.PlaceAutocompleteElement({
-    element: document.getElementById('location-input')
+  // PlaceAutocompleteElement インスタンス化
+  const acElem = new google.maps.places.PlaceAutocompleteElement();
+  const container = document.getElementById('location-input');
+  container.innerHTML = ''; // 既存の input を置き換え
+  container.appendChild(acElem);
+  autocomplete = acElem;
+  // 選択時イベント
+  acElem.addEventListener('gmp-select', async (e) => {
+    const prediction = e.detail.placePrediction;
+    const place = prediction.toPlace();
+    // geometry を取得
+    await place.fetchFields({ fields: ['geometry'] });
+    selectedPlace = place;
   });
-  autocomplete.bindTo('bounds', map);
 }
 window.initMap = initMap;
 
@@ -27,7 +39,7 @@ function loadGoogleMaps() {
   return new Promise((resolve, reject) => {
     if (mapsLoaded) return resolve();
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_API_KEY}&libraries=places,marker,geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_API_KEY}&libraries=places,marker,geometry&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = () => { mapsLoaded = true; initMap(); resolve(); };
@@ -48,19 +60,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // 3) onSearch
 async function onSearch() {
-  const place = autocomplete.getPlace();
-  if (!place || !place.geometry) {
+  if (!selectedPlace || !selectedPlace.geometry) {
     alert('候補から選択してください');
     return;
   }
-  map.setCenter(place.geometry.location);
+  map.setCenter(selectedPlace.geometry.location);
   await multiKeywordSearch(
-    { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
+    { lat: selectedPlace.geometry.location.lat(), lng: selectedPlace.geometry.location.lng() },
     ['vegetarian','vegan','ヴィーガン','ベジタリアン','素食','マクロビ','マクロビオティック']
   );
 }
 
-// 4) multiKeywordSearch
+// 4) multiKeywordSearch (Text Search → 詳細取得 → 距離計算 → 描画)
 async function multiKeywordSearch(loc, keywords) {
   // 4-1) Text Search via PlacesService
   const service = new google.maps.places.PlacesService(map);
@@ -140,3 +151,7 @@ async function multiKeywordSearch(loc, keywords) {
     li.addEventListener('mouseout',  () => marker.setIcon(defaultIcon));
   }
 }
+
+// 必要な API:
+// - Maps JavaScript API（libraries=places,marker,geometry）
+// - サーバー側: Places API（Web Service）
