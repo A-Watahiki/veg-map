@@ -158,7 +158,7 @@ async function multiKeywordSearch(loc, keywords) {
     // 遅延して表示
     setTimeout(() => {
       marker.setMap(map);
-      link.style.opacity = '1';
+      li.style.opacity = '1';
     }, idx * STAGGER_MS);
   });
 }
