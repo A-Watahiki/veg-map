@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src
+      'self' 'unsafe-inline' 'unsafe-eval'
+      https://maps.googleapis.com
+      https://maps.gstatic.com
+      https://www.gstatic.com;
+    connect-src
+      'self'
+      https://maps.googleapis.com
+      https://maps.gstatic.com
+      https://asia-northeast1-blissful-shore-458002-e9.cloudfunctions.net
+      https://verifyusername-ictqzxcg5a-an.a.run.app
+      https://searchplaces-ictqzxcg5a-an.a.run.app
+      https://veg-map-simple-mzwngqbnea-an.a.run.app;
+    img-src
+      'self'
+      data:
+      https://maps.googleapis.com
+      https://maps.gstatic.com
+      https://maps.google.com
+      https://www.google.com;
+    style-src
+      'self' 'unsafe-inline'
+      https://fonts.googleapis.com
+      https://maps.gstatic.com;
+    font-src
+      'self' data:
+      https://fonts.gstatic.com;
+    frame-src
+      'self'
+      https://*.firebaseapp.com
+      https://apis.google.com;
+  ">
   <meta charset="utf-8" />
   <title>目的地近辺のベジタリアン料理のお店</title>
   <style>
@@ -10,24 +44,39 @@
     .note { font-size: 0.9em; color: #555; }
   </style>
 </head>
+
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
+
   <div id="controls" style="margin:1rem 0;">
     <input id="location-input" type="text" placeholder="目的地を入力してください" />
     <button id="search-btn">検索</button>
   </div>
+
   <p class="note">
-    ※ ❗️マークは「ベジタリアン料理がある」とは表記されていないお店です
+    ※ 「❗️」マークは「ベジタリアン」「ヴィーガン」などの検索結果に出るものの  
+    ビジネスプロフィールに「ベジタリアン料理があるお店」の表記がないお店。
   </p>
+
   <div class="map-container">
     <div id="map"></div>
     <ul id="results"></ul>
   </div>
 
-  <!-- ここで Browser 用キーを埋め込み -->
+  <!-- APIキーとベースURLを埋め込む -->
+  <script>
+    // Cloud Run のエンドポイント（deploy.sh の .env に BASE_URL を設定してから envsubst で置換）
+    window.BASE_URL = '${BASE_URL}';
+  </script>
+
+  <!-- Maps JavaScript API のロード（コールバックで initMap を呼び出し） -->
   <script
-    src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_CLIENT}&libraries=places,geometry&callback=initMap"
-    async defer></script>
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9nZCDLaAdxlut2f4TIJScBhfsXjC57bA&libraries=places,geometry&callback=initMap"
+    async
+    defer
+  ></script>
+
+  <!-- メインのアプリケーションコード -->
   <script type="module" src="main.js"></script>
 </body>
 </html>

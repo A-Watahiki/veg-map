@@ -71,13 +71,10 @@
 
   <!-- Maps JavaScript API のロード（コールバックで initMap を呼び出し） -->
   <script
+    src="https://maps.googleapis.com/maps/api/js?key=$GOOGLE_MAPS_API_KEY_CLIENT&libraries=places,geometry&callback=initMap"
     async
     defer
-    src="https://maps.googleapis.com/maps/api/js?\
-key=${GOOGLE_MAPS_API_KEY_CLIENT}\
-&libraries=places,geometry\
-&callback=initMap">
-  </script>
+  ></script>
 
   <!-- メインのアプリケーションコード -->
   <script type="module" src="main.js"></script>
