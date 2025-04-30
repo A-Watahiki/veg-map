@@ -26,7 +26,7 @@ function initMap() {
   document.getElementById('search-btn')
     .addEventListener('click', onSearch);
 }
-window.initMap = initMap;  // コールバック用にグローバル露出
+window.initMap = initMap;
 
 // 2) onSearch
 async function onSearch() {
@@ -38,17 +38,15 @@ async function onSearch() {
   const loc = selectedPlace.geometry.location;
   map.setCenter(loc);
 
-  // ここで searchIcon を定義（google.maps が確実に存在するタイミング）
   const searchIcon = {
     path: google.maps.SymbolPath.CIRCLE,
-    fillColor: '#000080',    // ネイビー
+    fillColor: '#000080',
     fillOpacity: 1,
     strokeColor: '#fff',
     strokeWeight: 2,
     scale: 8
   };
 
-  // 既存の検索マーカーをクリア
   if (searchMarker) searchMarker.setMap(null);
   searchMarker = new google.maps.Marker({
     position: loc,
@@ -113,34 +111,35 @@ async function multiKeywordSearch(loc, keywords) {
     .filter(i => i.distanceValue <= 1500)
     .sort((a,b) => a.distanceValue - b.distanceValue);
 
-  // 描画クリア
+  // 既存マーカー・リストをクリア
   markers.forEach(m => m.setMap(null));
   markers.length = 0;
   const ul = document.getElementById('results');
   ul.innerHTML = '';
 
-  // 各アイテム
+  // 各アイテムを描画
   items.forEach((item, idx) => {
     const d = item.detail;
+    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+
+    // リスト項目
     const li = document.createElement('li');
     li.className = 'result-item';
     li.style.opacity = '0';
-
-    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
+    li.setAttribute('data-url', mapsUrl);  // URL 保存
     li.innerHTML = `
-      <a href="${mapsUrl}"
-         target="_blank"
-         rel="noopener noreferrer"
-         class="result-link">
+      <div class="item-content">
         <div class="item-name">${d.name}</div>
         <div class="item-vicinity">${d.vicinity}</div>
         <div class="item-distance">${item.distanceText} (${item.durationText})</div>
-      </a>
+      </div>
     `;
     ul.appendChild(li);
 
+    // マーカー
     const marker = new google.maps.Marker({
       position: d.geometry.location,
+      map: map,
       title: d.name,
       icon: {
         url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
@@ -149,7 +148,18 @@ async function multiKeywordSearch(loc, keywords) {
     });
     markers.push(marker);
 
-    // ホバー同期
+    // ——— 追加部分 ———
+    // マーカークリックで詳細を新タブ
+    marker.addListener('click', () => {
+      window.open(mapsUrl, '_blank', 'noopener');
+    });
+    // リスト項目クリックで詳細を新タブ
+    li.addEventListener('click', () => {
+      window.open(li.getAttribute('data-url'), '_blank', 'noopener');
+    });
+    // ——————————
+
+    // ホバー同期（必要に応じて残す）
     marker.addListener('mouseover', () => li.classList.add('hover'));
     marker.addListener('mouseout',  () => li.classList.remove('hover'));
     li.addEventListener('mouseover', () => marker.setIcon({
@@ -163,7 +173,6 @@ async function multiKeywordSearch(loc, keywords) {
 
     // ステージング表示
     setTimeout(() => {
-      marker.setMap(map);
       li.style.transition = 'opacity 0.3s';
       li.style.opacity = '1';
     }, idx * STAGGER_MS);
