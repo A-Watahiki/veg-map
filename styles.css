@@ -20,68 +20,65 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* 横スクロールを防止 */
+  overflow-x: hidden;
 }
 
-/* 各リスト項目を全幅にし、ボックスサイズを含める */
+/* 各リスト項目 */
 .result-item {
   display: block;
   width: 100%;
   box-sizing: border-box;
   margin: 0.5rem 0;
-  padding: 0.75rem 1rem;
+  padding: 0;               /* パディングは中身のグリッド要素に持たせる */
   opacity: 0;
   transition: opacity 0.3s ease;
   cursor: pointer;
 }
 
-/* 内部リンクは幅100%に、グリッド列定義を調整 */
-.result-item .result-link {
+/* 中身をグリッドで 3 列表示 */
+.result-item .item-content {
   display: grid;
   grid-template-columns: 2fr 3fr minmax(0, 1fr);
   align-items: center;
   gap: 0.5rem;
-  width: 100%;
+  padding: 0.75rem 1rem;
   background: #fff;
-  text-decoration: none;
-  color: inherit;
-  padding: 0;
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-/* 全体ホバーでカード浮き上がり */
-.result-item:hover .result-link,
-.result-item.hover .result-link {
+/* ホバーで浮き上がり */
+.result-item:hover .item-content,
+.result-item.hover .item-content {
   background: #f0f8ff;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.12);
 }
 
-/* タブレット向け：幅900px以下で２列レイアウト、距離は下部に */
+/* タブレット向け：幅900px以下で2列、距離は下段に */
 @media (max-width: 900px) {
-  .result-item .result-link {
+  .result-item .item-content {
     grid-template-columns: 2fr 1fr;
   }
-  .result-link .item-distance {
+  .item-distance {
     grid-column: 1 / -1;
     margin-top: 0.5rem;
     text-align: left;
   }
 }
 
-/* モバイル向け：幅600px以下で１列表示 */
+/* モバイル向け：幅600px以下で１列 */
 @media (max-width: 600px) {
-  .result-item .result-link {
+  .result-item .item-content {
     grid-template-columns: 1fr;
   }
-  .result-link .item-distance {
-    text-align: left;
+  .item-distance {
     margin-top: 0.25rem;
+    text-align: left;
   }
 }
 
 /* 店名 */
-.result-link .item-name {
+.item-name {
   font-weight: 500;
   color: #2a4f9c;
   white-space: normal;
@@ -89,7 +86,7 @@ body {
 }
 
 /* 住所 */
-.result-link .item-vicinity {
+.item-vicinity {
   font-size: 0.875rem;
   color: #444;
   white-space: normal;
@@ -97,11 +94,11 @@ body {
 }
 
 /* 距離＆時間 */
-.result-link .item-distance {
+.item-distance {
   font-size: 0.875rem;
   color: #666;
   white-space: nowrap;
-  max-width: 6rem;          /* 長すぎる場合は省略 */
+  max-width: 6rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
