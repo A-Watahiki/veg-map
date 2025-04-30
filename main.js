@@ -6,29 +6,38 @@ const markers = [];
 let searchMarker = null;
 const STAGGER_MS = 200;
 
+// 1) Google One-Tap で認証後に呼ばれるコールバック
 function handleCredentialResponse(response) {
   console.log("ID Token:", response.credential);
-  // 必要に応じてバックエンドに送ってセッションを発行
+  // 必要に応じてバックエンドへ送って検証／セッション発行
+
+  // UI を切り替え：サインインボタンを隠し、検索エリアを表示
+  document.getElementById('google-signin-btn').classList.add('hidden');
+  document.getElementById('search-area').classList.remove('hidden');
 }
 
+// 2) ページ読み込み時に GSI を初期化
 window.onload = () => {
   google.accounts.id.initialize({
-    client_id: "399808708717-8km5qd5gcqvbmji0a47keoij9mcivns3.apps.googleusercontent.com",
+    client_id: "YOUR_CLIENT_ID.apps.googleusercontent.com",
     callback: handleCredentialResponse,
   });
   google.accounts.id.renderButton(
     document.getElementById("google-signin-btn"),
     { theme: "outline", size: "large" }
   );
+  // 自動ワンタイムサインインを無効化したい場合:
   // google.accounts.id.disableAutoSelect();
 };
 
-// 1) initMap
+// 3) initMap をグローバルに定義（Maps API callback）
 function initMap() {
+  console.log('▶️ initMap called');
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
+
   autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('location-input')
   );
@@ -37,20 +46,23 @@ function initMap() {
     const p = autocomplete.getPlace();
     if (p.geometry) selectedPlace = p;
   });
+
   document.getElementById('search-btn')
     .addEventListener('click', onSearch);
 }
 window.initMap = initMap;
 
-// 2) onSearch
+// 4) 検索ボタン押下時
 async function onSearch() {
   if (!selectedPlace?.geometry) {
     alert('候補から選択してください');
     return;
   }
+
   const loc = selectedPlace.geometry.location;
   map.setCenter(loc);
 
+  // 検索地点マーカー
   const searchIcon = {
     path: google.maps.SymbolPath.CIRCLE,
     fillColor: '#000080',
@@ -73,21 +85,21 @@ async function onSearch() {
   );
 }
 
-// 3) multiKeywordSearch
+// 5) テキスト検索のみで結果を取得・表示
 async function multiKeywordSearch(loc, keywords) {
   const service = new google.maps.places.PlacesService(map);
   let allResults = [];
 
-  // テキスト検索をキーワードごとに実行し結果を集約
+  // 各キーワードで textSearch
   for (const kw of keywords) {
     const req = {
       query: `${kw} restaurant`,
       location: new google.maps.LatLng(loc.lat, loc.lng),
       radius: 1500
     };
-    const results = await new Promise(r =>
+    const results = await new Promise(resolve =>
       service.textSearch(req, (ps, st) =>
-        r(st === google.maps.places.PlacesServiceStatus.OK ? ps : [])
+        resolve(st === google.maps.places.PlacesServiceStatus.OK ? ps : [])
       )
     );
     allResults.push(...results);
@@ -102,7 +114,7 @@ async function multiKeywordSearch(loc, keywords) {
     return true;
   });
 
-  // 距離計算＆距離が1.5km以内をフィルタ
+  // 距離計算とフィルタ&ソート
   const origin = new google.maps.LatLng(loc.lat, loc.lng);
   const items = unique
     .map(d => {
@@ -125,21 +137,21 @@ async function multiKeywordSearch(loc, keywords) {
     .filter(i => i.distanceValue <= 1500)
     .sort((a, b) => a.distanceValue - b.distanceValue);
 
-  // 画面クリア
+  // 既存マーカーとリストをクリア
   markers.forEach(m => m.setMap(null));
   markers.length = 0;
   const ul = document.getElementById('results');
   ul.innerHTML = '';
 
-  // hover 用 InfoWindow
+  // InfoWindow for hover
   const hoverInfoWindow = new google.maps.InfoWindow();
 
-  // アイテム描画
+  // 各件描画
   items.forEach((item, idx) => {
     const d       = item.detail;
     const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
 
-    // リスト項目
+    // リスト項目作成
     const li = document.createElement('li');
     li.className = 'result-item';
     li.style.opacity = '0';
@@ -153,7 +165,7 @@ async function multiKeywordSearch(loc, keywords) {
     `;
     ul.appendChild(li);
 
-    // マーカー
+    // マーカー作成
     const marker = new google.maps.Marker({
       position: d.geometry.location,
       map,
@@ -165,10 +177,11 @@ async function multiKeywordSearch(loc, keywords) {
     });
     markers.push(marker);
 
-    // イベント連携
-    marker.addListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
+    // クリックで新タブに地図リンク
+    marker.addListener('click', () => window.open(mapsUrl, '_blank', 'noopener'));
     li.addEventListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
 
+    // ホバーで名称ポップアップ＆リストハイライト
     marker.addListener('mouseover', () => {
       hoverInfoWindow.setContent(`<strong>${d.name}</strong>`);
       hoverInfoWindow.open(map, marker);
@@ -179,6 +192,7 @@ async function multiKeywordSearch(loc, keywords) {
       li.classList.remove('hover');
     });
 
+    // リストホバーでマーカー拡大
     li.addEventListener('mouseover', () => marker.setIcon({
       url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
       scaledSize: new google.maps.Size(48, 48)
@@ -188,7 +202,7 @@ async function multiKeywordSearch(loc, keywords) {
       scaledSize: new google.maps.Size(32, 32)
     }));
 
-    // ステージング表示
+    // フェードイン
     setTimeout(() => {
       li.style.transition = 'opacity 0.3s';
       li.style.opacity = '1';

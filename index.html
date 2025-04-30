@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <meta charset="utf-8" />
+  <title>目的地近辺のベジタリアン料理のお店</title>
+
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
     script-src
@@ -34,8 +40,6 @@
       https://apis.google.com
       https://accounts.google.com;
   ">
-  <meta charset="utf-8" />
-  <title>目的地近辺のベジタリアン料理のお店</title>
 
   <!-- 外部スタイルを読み込む -->
   <link rel="stylesheet" href="./styles.css" />
@@ -44,31 +48,38 @@
 <body>
   <h2>目的地近辺のベジタリアン料理のお店</h2>
 
-
   <!-- ログインボタン設置用 -->
   <div id="google-signin-btn"></div>
 
-  <div id="controls">
-    <input id="location-input" type="text" placeholder="目的地を入力してください" />
-    <button id="search-btn">検索</button>
-  </div>
+  <!-- 認証後に表示する検索エリア -->
+  <div id="search-area" class="hidden">
+    <div id="controls">
+      <input
+        id="location-input"
+        type="text"
+        placeholder="目的地を入力してください"
+      />
+      <button id="search-btn">検索</button>
+    </div>
 
-  <p class="note">
-    Googleマップで目的地から半径1.5km以内で「ベジタリアン」や「ヴィーガン」、「マクロビオティック」などのキーワードで検索した結果をリストアップします。「検索」をクリックしてから結果が出るまで2,3秒かかることもあります。【免責事項】すべての店舗でベジタリアン、ヴィーガンメニューがあることを保証するものではありません。目的地から店舗までの直線距離を徒歩での移動時間に変換して表示します。実際の移動時間は異なる場合がありますので、あくまで目安としてご利用ください。
-  </p>
+    <p class="note">
+      Googleマップで目的地から半径1.5km以内で「ベジタリアン」や「ヴィーガン」、「マクロビオティック」などのキーワードで検索した結果をリストアップします。「検索」をクリックしてから結果が出るまで2,3秒かかることもあります。【免責事項】すべての店舗でベジタリアン、ヴィーガンメニューがあることを保証するものではありません。目的地から店舗までの直線距離を徒歩での移動時間に変換して表示します。実際の移動時間は異なる場合がありますので、あくまで目安としてご利用ください。
+    </p>
 
-  <div class="map-container">
-    <div id="map"></div>
-    <ul id="results"></ul>
+    <div class="map-container">
+      <div id="map"></div>
+      <ul id="results"></ul>
+    </div>
   </div>
 
   <!-- Maps JavaScript API をロード（callback=initMap） -->
   <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9nZCDLaAdxlut2f4TIJScBhfsXjC57bA&libraries=places,geometry&callback=initMap"
-    async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_CLIENT_KEY&libraries=places,geometry&callback=initMap"
+    async
+    defer
   ></script>
 
   <!-- メインのアプリケーションコード -->
-  <script type="module" src="main.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
