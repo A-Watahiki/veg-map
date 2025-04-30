@@ -38,6 +38,12 @@ function initMap() {
     zoom: 14
   });
 
+  // グローバルに一度だけ設定
+  const hoverInfoWindow = new google.maps.InfoWindow({
+    pixelOffset: new google.maps.Size(0, -10),  // 上向きに 10px オフセット
+    maxWidth: 200                               // 幅制限して余計な余白を防止
+  });
+
   autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('location-input')
   );
