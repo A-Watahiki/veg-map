@@ -19,7 +19,7 @@ function handleCredentialResponse(response) {
 // 2) ページ読み込み時に GSI を初期化
 window.onload = () => {
   google.accounts.id.initialize({
-    client_id: "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    client_id: "veg-map-simple.apps.googleusercontent.com",
     callback: handleCredentialResponse,
   });
   google.accounts.id.renderButton(
