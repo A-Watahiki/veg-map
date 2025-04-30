@@ -184,20 +184,29 @@ async function multiKeywordSearch(loc, keywords) {
     });
     markers.push(marker);
 
-    // クリックで新タブに地図リンク
-    marker.addListener('click', () => window.open(mapsUrl, '_blank', 'noopener'));
-    li.addEventListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
+// クリックで新タブに地図リンク
+marker.addListener('click', () => window.open(mapsUrl, '_blank', 'noopener'));
+li.addEventListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
 
-    // ホバーで名称ポップアップ＆リストハイライト
-    marker.addListener('mouseover', () => {
-      hoverInfoWindow.setContent(`<strong>${d.name}</strong>`);
-      hoverInfoWindow.open(map, marker);
-      li.classList.add('hover');
-    });
-    marker.addListener('mouseout',  () => {
-      hoverInfoWindow.close();
-      li.classList.remove('hover');
-    });
+// ——— ホバーで名称ポップアップ＆リストハイライト ———
+marker.addListener('mouseover', () => {
+  hoverInfoWindow.setContent(`
+    <div style="
+      margin: 0;
+      padding: 0;
+      line-height: 1.2;
+      font-weight: 500;
+    ">
+      ${d.name}
+    </div>
+  `);
+  hoverInfoWindow.open(map, marker);
+  li.classList.add('hover');
+});
+marker.addListener('mouseout', () => {
+  hoverInfoWindow.close();
+  li.classList.remove('hover');
+});
 
     // リストホバーでマーカー拡大
     li.addEventListener('mouseover', () => marker.setIcon({
