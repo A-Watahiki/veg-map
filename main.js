@@ -5,6 +5,7 @@ let map, autocomplete, selectedPlace;
 const markers = [];
 let searchMarker = null;
 const STAGGER_MS = 200;
+let hoverInfoWindow;
 
 // 1) Google One-Tap で認証後に呼ばれるコールバック
 function handleCredentialResponse(response) {
@@ -38,10 +39,10 @@ function initMap() {
     zoom: 14
   });
 
-  // グローバルに一度だけ設定
-  const hoverInfoWindow = new google.maps.InfoWindow({
-    pixelOffset: new google.maps.Size(0, -10),  // 上向きに 10px オフセット
-    maxWidth: 200                               // 幅制限して余計な余白を防止
+  // ここで InfoWindow を一度だけ生成
+  hoverInfoWindow = new google.maps.InfoWindow({
+    pixelOffset: new google.maps.Size(0, -10),
+    maxWidth: 200
   });
 
   autocomplete = new google.maps.places.Autocomplete(
