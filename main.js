@@ -7,7 +7,6 @@ let searchMarker = null;
 const STAGGER_MS = 200;
 
 function handleCredentialResponse(response) {
-  // response.credential に JWT が入る
   console.log("ID Token:", response.credential);
   // 必要に応じてバックエンドに送ってセッションを発行
 }
@@ -21,20 +20,15 @@ window.onload = () => {
     document.getElementById("google-signin-btn"),
     { theme: "outline", size: "large" }
   );
-  // 自動ワンタイムサインインを無効化したいとき:
   // google.accounts.id.disableAutoSelect();
 };
 
-
-
-// 1) initMap をグローバルに定義
+// 1) initMap
 function initMap() {
-  console.log('▶️ initMap called');
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 35.681236, lng: 139.767125 },
     zoom: 14
   });
-
   autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('location-input')
   );
@@ -43,7 +37,6 @@ function initMap() {
     const p = autocomplete.getPlace();
     if (p.geometry) selectedPlace = p;
   });
-
   document.getElementById('search-btn')
     .addEventListener('click', onSearch);
 }
@@ -55,7 +48,6 @@ async function onSearch() {
     alert('候補から選択してください');
     return;
   }
-
   const loc = selectedPlace.geometry.location;
   map.setCenter(loc);
 
@@ -67,7 +59,6 @@ async function onSearch() {
     strokeWeight: 2,
     scale: 8
   };
-
   if (searchMarker) searchMarker.setMap(null);
   searchMarker = new google.maps.Marker({
     position: loc,
@@ -85,9 +76,9 @@ async function onSearch() {
 // 3) multiKeywordSearch
 async function multiKeywordSearch(loc, keywords) {
   const service = new google.maps.places.PlacesService(map);
-  const placeIds = new Set();
+  let allResults = [];
 
-  // テキスト検索
+  // テキスト検索をキーワードごとに実行し結果を集約
   for (const kw of keywords) {
     const req = {
       query: `${kw} restaurant`,
@@ -99,51 +90,53 @@ async function multiKeywordSearch(loc, keywords) {
         r(st === google.maps.places.PlacesServiceStatus.OK ? ps : [])
       )
     );
-    results.forEach(p => placeIds.add(p.place_id || p.placeId));
+    allResults.push(...results);
   }
 
-  // 詳細取得
-  const detailSvc = new google.maps.places.PlacesService(map);
-  const details = (await Promise.all(
-    [...placeIds].map(id =>
-      new Promise(r =>
-        detailSvc.getDetails(
-          { placeId: id, fields: ['name','vicinity','geometry','place_id'] },
-          (d, st) => r(st === google.maps.places.PlacesServiceStatus.OK ? d : null)
-        )
-      )
-    )
-  )) .filter(Boolean);
+  // place_id で重複排除
+  const seen = new Set();
+  const unique = allResults.filter(p => {
+    const id = p.place_id || p.placeId;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 
-  // 距離計算
+  // 距離計算＆距離が1.5km以内をフィルタ
   const origin = new google.maps.LatLng(loc.lat, loc.lng);
-  const items = details
+  const items = unique
     .map(d => {
+      const position = d.geometry.location;
       const dist = google.maps.geometry.spherical
-        .computeDistanceBetween(origin, d.geometry.location);
+        .computeDistanceBetween(origin, position);
       const dur = dist / 1.4;
       return {
-        detail: d,
+        detail: {
+          name:     d.name,
+          vicinity: d.formatted_address || d.vicinity,
+          geometry: d.geometry,
+          place_id: d.place_id || d.placeId
+        },
         distanceValue: dist,
-        distanceText: `${Math.round(dist)} m`,
-        durationText: `${Math.round(dur/60)}分`
+        distanceText:  `${Math.round(dist)} m`,
+        durationText:  `${Math.round(dur/60)}分`
       };
     })
     .filter(i => i.distanceValue <= 1500)
-    .sort((a,b) => a.distanceValue - b.distanceValue);
+    .sort((a, b) => a.distanceValue - b.distanceValue);
 
-  // 既存マーカー・リストをクリア
+  // 画面クリア
   markers.forEach(m => m.setMap(null));
   markers.length = 0;
   const ul = document.getElementById('results');
   ul.innerHTML = '';
 
-  // hover 用 InfoWindow を一つだけ作成
+  // hover 用 InfoWindow
   const hoverInfoWindow = new google.maps.InfoWindow();
 
-  // 各アイテムを描画
+  // アイテム描画
   items.forEach((item, idx) => {
-    const d      = item.detail;
+    const d       = item.detail;
     const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
 
     // リスト項目
@@ -163,8 +156,8 @@ async function multiKeywordSearch(loc, keywords) {
     // マーカー
     const marker = new google.maps.Marker({
       position: d.geometry.location,
-      map: map,
-      title: d.name,
+      map,
+      title:  d.name,
       icon: {
         url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
         scaledSize: new google.maps.Size(32, 32)
@@ -172,39 +165,28 @@ async function multiKeywordSearch(loc, keywords) {
     });
     markers.push(marker);
 
-    // ——— 追加部分 ———
-    // マーカークリックで詳細を新タブ
-    marker.addListener('click', () => {
-      window.open(mapsUrl, '_blank', 'noopener');
-    });
-    // リスト項目クリックで詳細を新タブ
-    li.addEventListener('click', () => {
-      window.open(li.getAttribute('data-url'), '_blank', 'noopener');
-    });
-    // マウスオーバーで InfoWindow 表示
+    // イベント連携
+    marker.addListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
+    li.addEventListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
+
     marker.addListener('mouseover', () => {
-      hoverInfoWindow.setContent(`<div style="font-weight:500;">${d.name}</div>`);
+      hoverInfoWindow.setContent(`<strong>${d.name}</strong>`);
       hoverInfoWindow.open(map, marker);
       li.classList.add('hover');
     });
-    marker.addListener('mouseout', () => {
+    marker.addListener('mouseout',  () => {
       hoverInfoWindow.close();
       li.classList.remove('hover');
     });
-    // li のホバーでもマーカーアイコン拡大（既存）
-    li.addEventListener('mouseover', () => {
-      marker.setIcon({
-        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-        scaledSize: new google.maps.Size(48, 48)
-      });
-    });
-    li.addEventListener('mouseout', () => {
-      marker.setIcon({
-        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-        scaledSize: new google.maps.Size(32, 32)
-      });
-    });
-    // ——————————
+
+    li.addEventListener('mouseover', () => marker.setIcon({
+      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+      scaledSize: new google.maps.Size(48, 48)
+    }));
+    li.addEventListener('mouseout',  () => marker.setIcon({
+      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+      scaledSize: new google.maps.Size(32, 32)
+    }));
 
     // ステージング表示
     setTimeout(() => {

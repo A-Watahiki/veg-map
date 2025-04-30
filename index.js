@@ -1,14 +1,19 @@
+// index.js の先頭に追加読み込み
+const { OAuth2Client } = require('google-auth-library');
+const jwt            = require('jsonwebtoken');
+const cookieParser   = require('cookie-parser');
+
+const CLIENT_ID      = '399808708717-8km5qd5gcqvbmji0a47keoij9mcivns3.apps.googleusercontent.com';
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const client         = new OAuth2Client(CLIENT_ID);
+
+
 // index.js (Express サーバー直起動版、CommonJS + CORS ミドルウェア)
 const express = require('express');
 const cors = require('cors');
-const admin = require('firebase-admin');
 const fetch = require('node-fetch');
-const { getFirestore } = require('firebase-admin/firestore');
 
-// Firebase Admin 初期化
-admin.initializeApp();
-const vegDb = getFirestore(); // default database
-const FieldValue = admin.firestore.FieldValue;
+
 
 // 環境変数から API キー取得
 const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
@@ -26,76 +31,43 @@ app.use(cors({
 // JSON ボディパーサー
 app.use(express.json());
 
+// CORS のあと、JSON パーサーのあとに
+app.use(cookieParser());
+
+app.post('/auth/google', async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ error: 'Missing ID token' });
+  let payload;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: CLIENT_ID,
+    });
+    payload = ticket.getPayload();  // email, sub, name などが取れる
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid ID token' });
+  }
+
+  // 例：payload.sub を自社ユーザーIDとして扱う
+  const googleUid = payload.sub;
+  // ← ここでユーザーデータベースに登録 or 照合 を行う
+
+  // セッショントークンを発行
+  const sessionToken = jwt.sign({ uid: googleUid }, SESSION_SECRET, {
+    expiresIn: '7d'
+  });
+  res.cookie('session', sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  res.json({ success: true });
+});
+
+
+
 // ヘルスチェック
 app.get('/', (req, res) => res.status(200).send('OK'));
-
-// vegetarianFlag エンドポイント
-app.get('/vegetarianFlag', async (req, res) => {
-  const placeId = req.query.place_id;
-  if (!placeId) return res.status(400).json({ error: 'Missing place_id' });
-  try {
-    const doc = await vegDb.collection('vegetarianFlags').doc(placeId).get();
-    if (doc.exists) {
-      return res.json({ serves_vegetarian_food: doc.data().flag });
-    }
-  } catch (e) {
-    console.warn(e);
-  }
-  try {
-    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-    url.searchParams.set('place_id', placeId);
-    url.searchParams.set('fields', 'serves_vegetarian_food');
-    url.searchParams.set('key', API_KEY);
-    const response = await fetch(url);
-    const data = await response.json();
-    if (data.status !== 'OK') {
-      return res.status(500).json({ error: data.status, message: data.error_message });
-    }
-    const flag = data.result.serves_vegetarian_food;
-    if (typeof flag === 'boolean') {
-      await vegDb.collection('vegetarianFlags').doc(placeId)
-        .set({ flag, updated: FieldValue.serverTimestamp() });
-    }
-    return res.json({ serves_vegetarian_food: flag });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Internal error' });
-  }
-});
-
-// veganFlag エンドポイント
-app.get('/veganFlag', async (req, res) => {
-  const placeId = req.query.place_id;
-  if (!placeId) return res.status(400).json({ error: 'Missing place_id' });
-  try {
-    const doc = await vegDb.collection('veganFlags').doc(placeId).get();
-    if (doc.exists) {
-      return res.json({ serves_vegan_food: doc.data().flag });
-    }
-  } catch (e) {
-    console.warn(e);
-  }
-  try {
-    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-    url.searchParams.set('place_id', placeId);
-    url.searchParams.set('fields', 'serves_vegan_food');
-    url.searchParams.set('key', API_KEY);
-    const response = await fetch(url);
-    const data = await response.json();
-    if (data.status !== 'OK') {
-      return res.status(500).json({ error: data.status, message: data.error_message });
-    }
-    const flag = data.result.serves_vegan_food;
-    if (typeof flag === 'boolean') {
-      await vegDb.collection('veganFlags').doc(placeId)
-        .set({ flag, updated: FieldValue.serverTimestamp() });
-    }
-    return res.json({ serves_vegan_food: flag });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Internal error' });
-  }
-});
 
 // searchPlaces エンドポイント (Nearby Search)
 app.post('/searchPlaces', async (req, res) => {
