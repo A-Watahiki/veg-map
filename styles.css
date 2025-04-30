@@ -56,11 +56,6 @@ body {
   box-shadow: 0 6px 12px rgba(0,0,0,0.12);
 }
 
-/* マーカー側の hover 連携に備え、
-   .hover クラスを .result-item に付与する想定 */
-.result-item.hover {
-  /* 必要なら背景だけでも */
-}
 
 /* レスポンシブ：狭い画面では１列表示に */
 @media (max-width: 600px) {
@@ -72,8 +67,6 @@ body {
     margin-top: 0.25rem;
   }
 }
-
-/* — 以下、既存のスタイルをそのまま — */
 
 /* 店名 */
 .result-link .item-name {
@@ -145,4 +138,8 @@ body {
   color: #666;
   margin: 0 0 1rem;
   line-height: 1.4;
+}
+
+.hidden {
+  display: none !important;
 }
