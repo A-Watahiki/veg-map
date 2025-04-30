@@ -22,11 +22,14 @@ window.onload = () => {
   google.accounts.id.initialize({
     client_id: "399808708717-8km5qd5gcqvbmji0a47keoij9mcivns3.apps.googleusercontent.com",
     callback: handleCredentialResponse,
+    auto_select: true, 
+    cancel_on_tap_outside: false  
   });
   google.accounts.id.renderButton(
     document.getElementById("google-signin-btn"),
     { theme: "outline", size: "large" }
   );
+  google.accounts.id.prompt();   // One-Tap プロンプトも表示できる
   // 自動ワンタイムサインインを無効化したい場合:
   // google.accounts.id.disableAutoSelect();
 };
