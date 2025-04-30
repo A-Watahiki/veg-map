@@ -22,14 +22,11 @@ window.onload = () => {
   google.accounts.id.initialize({
     client_id: "399808708717-8km5qd5gcqvbmji0a47keoij9mcivns3.apps.googleusercontent.com",
     callback: handleCredentialResponse,
-    auto_select: true, 
-    cancel_on_tap_outside: false  
   });
   google.accounts.id.renderButton(
     document.getElementById("google-signin-btn"),
     { theme: "outline", size: "large" }
   );
-  google.accounts.id.prompt();   // One-Tap プロンプトも表示できる
   // 自動ワンタイムサインインを無効化したい場合:
   // google.accounts.id.disableAutoSelect();
 };
@@ -42,12 +39,7 @@ function initMap() {
     zoom: 14
   });
 
-  // ここで InfoWindow を一度だけ生成
-  hoverInfoWindow = new google.maps.InfoWindow({
-    pixelOffset: new google.maps.Size(0, -10),
-    maxWidth: 200
-  });
-
+  
   autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('location-input')
   );
@@ -187,29 +179,20 @@ async function multiKeywordSearch(loc, keywords) {
     });
     markers.push(marker);
 
-// クリックで新タブに地図リンク
-marker.addListener('click', () => window.open(mapsUrl, '_blank', 'noopener'));
-li.addEventListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
+    // クリックで新タブに地図リンク
+    marker.addListener('click', () => window.open(mapsUrl, '_blank', 'noopener'));
+    li.addEventListener('click',  () => window.open(mapsUrl, '_blank', 'noopener'));
 
-// ——— ホバーで名称ポップアップ＆リストハイライト ———
-marker.addListener('mouseover', () => {
-  hoverInfoWindow.setContent(`
-    <div style="
-      margin: 0;
-      padding: 0;
-      line-height: 1.2;
-      font-weight: 500;
-    ">
-      ${d.name}
-    </div>
-  `);
-  hoverInfoWindow.open(map, marker);
-  li.classList.add('hover');
-});
-marker.addListener('mouseout', () => {
-  hoverInfoWindow.close();
-  li.classList.remove('hover');
-});
+    // ホバーで名称ポップアップ＆リストハイライト
+    marker.addListener('mouseover', () => {
+      hoverInfoWindow.setContent(`<strong>${d.name}</strong>`);
+      hoverInfoWindow.open(map, marker);
+      li.classList.add('hover');
+    });
+    marker.addListener('mouseout',  () => {
+      hoverInfoWindow.close();
+      li.classList.remove('hover');
+    });
 
     // リストホバーでマーカー拡大
     li.addEventListener('mouseover', () => marker.setIcon({
