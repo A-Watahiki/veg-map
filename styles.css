@@ -16,47 +16,64 @@ body {
 }
 
 /* リスト全体 */
-
- /* リスト全体リセット */
- #results {
+#results {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-/* li はマージンだけ持つ */
+/* 各リスト項目を全幅にし、ボックスサイズを含める */
 .result-item {
-  margin: 0 10pt;
-  padding: 0.75rem 1rem;
-  list-style: none;
-  /* li 自体は透過スタート、フェードインだけ担当 */
+  display: block;               /* フル幅確保 */
+  width: 100%;
+  box-sizing: border-box;       /* padding を幅に含める */
+  margin: 0.5rem 0;
+  padding: 0.75rem 1rem;        /* タップしやすい余白 */
   opacity: 0;
   transition: opacity 0.3s ease;
   cursor: pointer;
 }
 
-/* 実際のグリッドレイアウト＆背景・ホバーは a に集約 */
+/* 内部リンクは幅100%に */
 .result-item .result-link {
   display: grid;
   grid-template-columns: 2fr 3fr 2fr;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid #e0e0e0;
+  width: 100%;
   background: #fff;
   text-decoration: none;
   color: inherit;
-  cursor: pointer;
+  padding: 0;                   /* padding は .result-item が担当 */
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-.result-item .result-link:hover,
-/* マーカー同期用に付与する .hover クラスも効かせる */
+/* 全体ホバーでカード浮き上がり */
+.result-item:hover .result-link,
 .result-item.hover .result-link {
   background: #f0f8ff;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.12);
 }
+
+/* マーカー側の hover 連携に備え、
+   .hover クラスを .result-item に付与する想定 */
+.result-item.hover {
+  /* 必要なら背景だけでも */
+}
+
+/* レスポンシブ：狭い画面では１列表示に */
+@media (max-width: 600px) {
+  .result-item .result-link {
+    grid-template-columns: 1fr;
+  }
+  .result-link .item-distance {
+    text-align: left;
+    margin-top: 0.25rem;
+  }
+}
+
+/* — 以下、既存のスタイルをそのまま — */
 
 /* 店名 */
 .result-link .item-name {
@@ -78,7 +95,6 @@ body {
 .result-link .item-distance {
   font-size: 0.875rem;
   color: #666;
-  text-align: right;
   white-space: nowrap;
 }
 
