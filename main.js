@@ -217,22 +217,9 @@ async function multiKeywordSearch(loc, keywords) {
 }
 
 document.getElementById('home-btn').addEventListener('click', () => {
-  // --- 1. URLバーからパラメータをクリア ---
-  window.history.replaceState(null, '', window.location.pathname);
-
-  // --- 2. マーカー・リスト・検索入力をリセット ---
-  if (searchMarker) {
-    searchMarker.setMap(null);
-    searchMarker = null;
-  }
-  markers.forEach(m => m.setMap(null));
-  markers.length = 0;
-  document.getElementById('results').innerHTML = '';
-  document.getElementById('location-input').value = '';
-  selectedPlace = null;
-
-  // --- 3. 地図を初期状態に戻す ---
-  initMap();
+   // ページをフルリロードして必ず Maps API の callback=initMap を実行
+   window.history.replaceState(null, '', window.location.pathname);
+   window.location.reload();
 });
 
 
