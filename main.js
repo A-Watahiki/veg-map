@@ -214,6 +214,11 @@ async function multiKeywordSearch(loc, keywords) {
   });
 }
 
+document.getElementById('home-btn').addEventListener('click', () => {
+  // フルリロードすれば Maps API の callback=initMap が再走します
+  window.location.href = 'index.html';
+});
+
 
 // 共有ボタンのクリックで URL をコピー
 const shareBtn = document.getElementById('share-btn');
