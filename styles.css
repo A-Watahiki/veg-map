@@ -155,3 +155,20 @@ body {
 .hidden {
   display: none !important;
 }
+
+.header-nav {
+  padding: 1rem;
+  background: #fff;
+}
+#home-btn {
+  font-size: 0.9rem;
+  color: #23408C;
+  text-decoration: none;
+  border: 1px solid #23408C;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+#home-btn:hover {
+  background: #23408C;
+  color: #fff;
+}
