@@ -153,7 +153,7 @@ async function multiKeywordSearch(loc, keywords) {
     const d       = item.detail;
     const mapsUrl =
     "https://www.google.com/maps/search/?api=1" +
-    `&query_place_id=${d.place_id}`;  
+    `&query=${encodeURIComponent(d.name)}`;
     // リスト項目作成
     const li = document.createElement('li');
     li.className = 'result-item';
