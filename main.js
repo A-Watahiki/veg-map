@@ -6,6 +6,16 @@ const markers = [];
 let searchMarker = null;
 const STAGGER_MS = 200;
 
+// 2）pageshow イベントで必ず地図を再初期化する
+window.addEventListener('pageshow', (event) => {
+  // ページ初回ロード or BFCache からの復帰どちらもここで拾える
+  console.log('▶️ pageshow:', event.persisted ? 'BFCache復帰' : '通常ロード');
+  // マップコンテナを空にしてから初期化し直す
+  const mapEl = document.getElementById('map');
+  mapEl.innerHTML = '';  
+  initMap();
+});
+
 // 3) initMap をグローバルに定義（Maps API callback）
 function initMap() {
   console.log('▶️ initMap called');
