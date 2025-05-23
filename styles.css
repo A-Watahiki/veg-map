@@ -156,19 +156,36 @@ body {
   display: none !important;
 }
 
-.header-nav {
-  padding: 1rem;
-  background: #fff;
-}
-#home-btn {
+/* 共通ボタンベース */
+.header-nav a,
+.header-nav button {
   font-size: 0.9rem;
-  color: #23408C;
   text-decoration: none;
   border: 1px solid #23408C;
   padding: 0.5rem 1rem;
   border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  margin-right: 0.5rem;
+}
+
+/* トップページへ戻る */
+#home-btn {
+  background: #fff;
+  color: #23408C;
 }
 #home-btn:hover {
   background: #23408C;
   color: #fff;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 検索結果を共有 */
+#share-btn {
+  background: #23408C;
+  color: #fff;
+}
+#share-btn:hover {
+  background: #1a2f6f; /* 少し暗めのブルーに */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
