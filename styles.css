@@ -189,3 +189,21 @@ body {
   background: #1a2f6f; /* 少し暗めのブルーに */
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
+
+
+/* モバイル対応: 検索バーを縦並び＆幅100%に */
+@media (max-width: 600px) {
+  #controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #location-input {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  #search-btn {
+    width: 100%;
+    border-left: 2px solid #23408C; /* 上下左右のボーダー調整 */
+    border-radius: 8px;
+  }
+}

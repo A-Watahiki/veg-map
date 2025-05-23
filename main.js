@@ -22,6 +22,7 @@ function initMap() {
   autocomplete.addListener('place_changed', () => {
     const p = autocomplete.getPlace();
     if (p.geometry) selectedPlace = p;
+    onSearch();
   });
 
   // 検索ボタンにイベントをセット
