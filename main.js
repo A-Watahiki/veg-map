@@ -151,8 +151,9 @@ async function multiKeywordSearch(loc, keywords) {
   // 各件描画
   items.forEach((item, idx) => {
     const d       = item.detail;
-    const mapsUrl = `https://www.google.com/maps/place/?q=place_id:${d.place_id}`;
-
+    const mapsUrl =
+    "https://www.google.com/maps/search/?api=1" +
+    `&query_place_id=${d.place_id}`;  
     // リスト項目作成
     const li = document.createElement('li');
     li.className = 'result-item';
