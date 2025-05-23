@@ -5,8 +5,6 @@ let map, autocomplete, selectedPlace;
 const markers = [];
 let searchMarker = null;
 const STAGGER_MS = 200;
-let hoverInfoWindow;
-
 
 // 3) initMap をグローバルに定義（Maps API callback）
 function initMap() {
@@ -16,7 +14,7 @@ function initMap() {
     zoom: 14
   });
 
-  
+  // オートコンプリート初期化
   autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('location-input')
   );
@@ -26,8 +24,28 @@ function initMap() {
     if (p.geometry) selectedPlace = p;
   });
 
+  // 検索ボタンにイベントをセット
   document.getElementById('search-btn')
     .addEventListener('click', onSearch);
+
+  // URL パラメータに place_id があれば自動検索
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('place_id')) {
+    const placeId = params.get('place_id');
+    const service = new google.maps.places.PlacesService(map);
+    service.getDetails(
+      { placeId, fields: ['geometry', 'name', 'place_id'] },
+      (detail, status) => {
+        if (
+          status === google.maps.places.PlacesServiceStatus.OK &&
+          detail.geometry
+        ) {
+          selectedPlace = detail;
+          onSearch();
+        }
+      }
+    );
+  }
 }
 window.initMap = initMap;
 
@@ -37,6 +55,11 @@ async function onSearch() {
     alert('候補から選択してください');
     return;
   }
+
+  // 1) URL を置き換える（履歴に残さないので replaceState）
+  const params = new URLSearchParams();
+  params.set('place_id', selectedPlace.place_id);
+  window.history.replaceState(null, '', `?${params}`);
 
   const loc = selectedPlace.geometry.location;
   map.setCenter(loc);
@@ -129,8 +152,9 @@ async function multiKeywordSearch(loc, keywords) {
   items.forEach((item, idx) => {
     const d       = item.detail;
     const mapsUrl =
-    "https://www.google.com/maps/search/?api=1" +
-    `&query=${encodeURIComponent(d.name)}`;
+      'https://www.google.com/maps/search/?api=1' +
+      `&query=${encodeURIComponent(d.name)}`;
+
     // リスト項目作成
     const li = document.createElement('li');
     li.className = 'result-item';
