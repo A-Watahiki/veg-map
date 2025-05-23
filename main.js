@@ -215,27 +215,17 @@ async function multiKeywordSearch(loc, keywords) {
 }
 
 
-// 以下を追加: 共有ボタンの挙動
-window.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('share-btn');
-  if (!btn) return;
-  btn.addEventListener('click', async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: document.title, url });
-      } catch (err) {
-        console.warn('シェアに失敗:', err);
-      }
-    } else if (navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(url);
-        alert('URLをコピーしました！');
-      } catch (err) {
-        prompt('以下のURLを手動でコピーしてください', url);
-      }
-    } else {
-      prompt('以下のURLを手動でコピーしてください', url);
+// 共有ボタンのクリックで URL をコピー
+const shareBtn = document.getElementById('share-btn');
+if (shareBtn) {
+  shareBtn.addEventListener('click', async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      alert('検索結果の URL をコピーしました');
+    } catch (err) {
+      console.error('URL のコピーに失敗しました', err);
+      alert('コピーに失敗しました。手動で URL をコピーしてください。');
     }
   });
-});
+}
