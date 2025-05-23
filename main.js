@@ -67,12 +67,13 @@ async function onSearch() {
 
   // 検索地点マーカー
   const searchIcon = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: '#000080',
+    path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z",
+    fillColor: "#FF6347",    // トマト色の塗り
     fillOpacity: 1,
-    strokeColor: '#fff',
+    strokeColor: "#FFFFFF",  // 白い縁取り
     strokeWeight: 2,
-    scale: 8
+    scale: 2,                // 元サイズの2倍
+    anchor: new google.maps.Point(12, 24)  // ピン先をマーカー位置に合わせる
   };
   if (searchMarker) searchMarker.setMap(null);
   searchMarker = new google.maps.Marker({
