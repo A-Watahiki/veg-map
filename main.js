@@ -7,29 +7,6 @@ let searchMarker = null;
 const STAGGER_MS = 200;
 let hoverInfoWindow;
 
-// 1) Google One-Tap で認証後に呼ばれるコールバック
-function handleCredentialResponse(response) {
-  console.log("ID Token:", response.credential);
-  // 必要に応じてバックエンドへ送って検証／セッション発行
-
-  // UI を切り替え：サインインボタンを隠し、検索エリアを表示
-  document.getElementById('google-signin-btn').classList.add('hidden');
-  document.getElementById('search-area').classList.remove('hidden');
-}
-
-// 2) ページ読み込み時に GSI を初期化
-window.onload = () => {
-  google.accounts.id.initialize({
-    client_id: "399808708717-8km5qd5gcqvbmji0a47keoij9mcivns3.apps.googleusercontent.com",
-    callback: handleCredentialResponse,
-  });
-  google.accounts.id.renderButton(
-    document.getElementById("google-signin-btn"),
-    { theme: "outline", size: "large" }
-  );
-  // 自動ワンタイムサインインを無効化したい場合:
-  // google.accounts.id.disableAutoSelect();
-};
 
 // 3) initMap をグローバルに定義（Maps API callback）
 function initMap() {
