@@ -215,8 +215,9 @@ async function multiKeywordSearch(loc, keywords) {
 }
 
 document.getElementById('home-btn').addEventListener('click', () => {
-  // フルリロードすれば Maps API の callback=initMap が再走します
-  window.location.href = 'https://a-watahiki.github.io/veg-map/';
+  // 1) URL から place_id を消す（トップページ状態に）
+  window.history.replaceState(null, '', window.location.pathname);
+  window.location.reload();
 });
 
 
